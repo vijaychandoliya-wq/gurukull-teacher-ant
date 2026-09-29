@@ -8,11 +8,16 @@ import {colors, font, radius, spacing} from '../theme';
 
 /** `26-12-2026` → `{day: '26', month: 'DEC'}` for the calendar chip. */
 function splitDate(value?: string) {
-  const parts = String(value || '').split('-');
+  const raw = String(value || '');
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  if (iso) {
+    return {day: iso[3], month: months[Number(iso[2]) - 1] || ''};
+  }
+  const parts = raw.split('-');
   if (parts.length < 2) {
     return {day: '—', month: ''};
   }
-  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   return {day: parts[0], month: months[Number(parts[1]) - 1] || ''};
 }
 

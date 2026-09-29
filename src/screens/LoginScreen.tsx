@@ -1,17 +1,22 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Image, KeyboardAvoidingView, ScrollView, StatusBar, StyleSheet} from 'react-native';
 import {Button, Card, Form, Input, Text, WhiteSpace} from '@ant-design/react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {login} from '../api';
+import {getSchoolCode, login, PRODUCTION_BASE_URL, setBaseUrl, setSchoolCode} from '../api';
 import {friendlyError} from '../hooks';
 import {AntIcon, ErrorBar} from '../components/ui';
 import {colors, font, radius, spacing} from '../theme';
 
 export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
+  const [schoolCode, setSchool] = useState('GW101');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    getSchoolCode().then(setSchool);
+  }, []);
 
   const submit = async () => {
     if (!email.trim() || !password) {
@@ -21,6 +26,8 @@ export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
     setLoading(true);
     setError('');
     try {
+      await setSchoolCode(schoolCode);
+      await setBaseUrl(PRODUCTION_BASE_URL);
       await login(email, password);
       onSuccess();
     } catch (reason) {
@@ -53,6 +60,16 @@ export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
               <ErrorBar message={error} onClose={() => setError('')} />
               <WhiteSpace size="lg" />
               <Form layout="vertical">
+                <Form.Item label="School code" required>
+                  <Input
+                    value={schoolCode}
+                    onChangeText={setSchool}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    placeholder="GW101"
+                    prefix={<AntIcon name="bank" color={colors.weak} size={19} />}
+                  />
+                </Form.Item>
                 <Form.Item label="Email" required>
                   <Input
                     value={email}
