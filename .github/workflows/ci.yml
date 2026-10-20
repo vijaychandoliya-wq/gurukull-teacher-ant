@@ -22,4 +22,3 @@ jobs:
       - run: npm ci
       - run: npm test -- --runInBand --ci
       - run: npx tsc --noEmit
-
