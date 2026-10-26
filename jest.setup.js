@@ -1,3 +1,4 @@
+/* global jest */
 /**
  * Native modules Ant Design Mobile pulls in have to be stubbed before any
  * component is imported, otherwise `TurboModuleRegistry.getEnforcing` throws
@@ -49,3 +50,6 @@ jest.mock('@react-native-async-storage/async-storage', () => {
     },
   };
 });
+
+// Native secure storage boundary; test secrets never leave process memory.
+jest.mock('react-native-keychain',()=>{const values=new Map();return {ACCESSIBLE:{WHEN_UNLOCKED_THIS_DEVICE_ONLY:'deviceOnly'},setGenericPassword:jest.fn(async(user,password,options)=>{values.set(options.service,{username:user,password});return true;}),getGenericPassword:jest.fn(async options=>values.get(options.service)||false),resetGenericPassword:jest.fn(async options=>{values.delete(options.service);return true;})};});

@@ -198,11 +198,11 @@ function TeacherApp({onSignedOut}: {onSignedOut: () => void}) {
       case 'profile':
         return <ProfileScreen profile={profile} navigate={navigate} />;
       case 'changePassword':
-        return <ChangePasswordScreen onDone={goBack} />;
+        return <ChangePasswordScreen onDone={() => {void clearSession().catch(() => {}).finally(onSignedOut);}} />;
       default:
         return <DashboardScreen navigate={navigate} profile={profile} reloadProfile={loadProfile} />;
     }
-  }, [route, profile, loadProfile, navigate, goBack]);
+  }, [route, profile, loadProfile, navigate, goBack, onSignedOut]);
 
   const canGoBack = history.length > 0;
 

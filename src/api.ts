@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {getSessionToken,setSessionToken,clearSessionToken} from './secureSession';
 
-/** Live Gurukull school platform. Paths already include `/api`. */
-export const PRODUCTION_BASE_URL = 'https://app.gurukull.in';
-
+/** Shared live Gurukull API. The selected school code is sent as the tenant key. */
+export const PRODUCTION_BASE_URL = 'https://gurukul-worker-api.gurukull.workers.dev';
 const DEFAULT_BASE_URL = PRODUCTION_BASE_URL;
 
-const TOKEN_KEY = 'gurukull.teacher.token';
 const DEVICE_KEY = 'gurukull.teacher.device';
 const SCHOOL_CODE_KEY = 'gurukull.teacher.school_code';
 const BASE_URL_KEY = 'gurukull.teacher.base_url';
@@ -52,11 +51,15 @@ export async function setBaseUrl(url: string) {
 }
 
 export async function setSchoolCode(code: string) {
-  await AsyncStorage.setItem(SCHOOL_CODE_KEY, code.trim() || 'GW101');
+  const normalized = code.trim().toUpperCase();
+  await AsyncStorage.setItem(SCHOOL_CODE_KEY, normalized);
+  // School codes are tenant identifiers, not DNS names. Always use the shared
+  // API so any configured school can use the same binary.
+  await setBaseUrl(DEFAULT_BASE_URL);
 }
 
 export async function getSchoolCode() {
-  return (await AsyncStorage.getItem(SCHOOL_CODE_KEY)) || 'GW101';
+  return (await AsyncStorage.getItem(SCHOOL_CODE_KEY)) || '';
 }
 
 export type AnyRecord = Record<string, any>;
@@ -80,9 +83,10 @@ function encode(values: Record<string, string | number | undefined>) {
 }
 
 async function request(path: string, options: RequestInit = {}) {
-  const token = await AsyncStorage.getItem(TOKEN_KEY);
-  const schoolCode = (await AsyncStorage.getItem(SCHOOL_CODE_KEY)) || 'GW101';
+  const token = await getSessionToken();
+  const schoolCode = (await AsyncStorage.getItem(SCHOOL_CODE_KEY)) || '';
   const baseUrl = await getBaseUrl();
+
 
   const response = await fetch(`${baseUrl}${path}`, {
     ...options,
@@ -130,10 +134,35 @@ function postJson(path: string, body: AnyRecord) {
 }
 
 /** Endpoints wrap their payload in `data`; a few return the array directly. */
-const listOf = (payload: any): any[] => {
-  const value = payload?.data ?? payload;
-  return Array.isArray(value) ? value : [];
-};
+const listOf = (payload: any): any[] => asRecordList(payload?.data ?? payload);
+
+function isRecord(value: unknown): value is AnyRecord {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Laravel resource collections keep Eloquent keys after `sortBy`, so JSON
+ * encodes the list as an object (`{"4": {...}}`) instead of an array. Treat
+ * both shapes, plus a `{data: ...}` wrap, as a list of records.
+ */
+function asRecordList(value: unknown): AnyRecord[] {
+  if (value == null) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.filter(isRecord);
+  }
+  if (!isRecord(value)) {
+    return [];
+  }
+  if (value.data !== undefined) {
+    return asRecordList(value.data);
+  }
+  if (value.student_name || value.student_id || value.name || value.title || value.standard_section) {
+    return [value];
+  }
+  return Object.values(value).filter(isRecord);
+}
 
 /**
  * Marks a screen's data as unavailable to this teacher rather than as an error.
@@ -171,7 +200,7 @@ export async function login(email: string, password: string) {
   if (!payload.token) {
     throw new ApiError(payload.message || 'Login did not return an access token.', 500);
   }
-  await AsyncStorage.setItem(TOKEN_KEY, payload.token);
+  await setSessionToken(payload.token);
   const roles = Array.isArray(payload.permissions) ? payload.permissions : [];
   await AsyncStorage.setItem(ROLES_KEY, JSON.stringify(roles));
   return payload;
@@ -181,25 +210,18 @@ export async function logout() {
   try {
     await request('/api/teacher/logout', {method: 'POST', body: ''});
   } finally {
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    await clearSessionToken();
     await AsyncStorage.removeItem(ROLES_KEY);
   }
 }
 
-export const hasSession = async () => Boolean(await AsyncStorage.getItem(TOKEN_KEY));
-export const clearSession = async () => AsyncStorage.removeItem(TOKEN_KEY);
+export const hasSession = async () => Boolean(await getSessionToken());
+export const clearSession = async () => clearSessionToken();
 
 export const changePassword = (values: {current_password: string; password: string; password_confirmation: string}) =>
   request('/api/teacher/change/password', {
     method: 'POST',
-    body: encode({
-      ...values,
-      old_password: values.current_password,
-      new_password: values.password,
-      oldpassword: values.current_password,
-      newpassword: values.password,
-      confirmpassword: values.password_confirmation,
-    }),
+    body: encode(values),
   });
 
 // ------------------------------------------------------------------- me -----
@@ -463,21 +485,25 @@ export async function getAttendanceForm(): Promise<{
 }> {
   const payload = await request('/api/teacher/attendance/list');
   const source = payload.data || payload;
-  const standards = source?.standardlist?.data || source?.standardlist || [];
-  const students = source?.studentlist?.data || source?.studentlist || [];
-  const reasons = source?.absentReasonlist?.data || source?.absentReasonlist || [];
+  const standardlist: AnyRecord[] = asRecordList(source?.standardlist).map(row => ({
+    ...row,
+    standard_section: row.standard_section || row.name,
+  }));
+  const className = (standardId: unknown) =>
+    standardlist.find(row => String(row.id ?? row.standardLink_id) === String(standardId))?.standard_section || '';
   return {
-    standardlist: (Array.isArray(standards) ? standards : []).map((row: AnyRecord) => ({
-      ...row,
-      standard_section: row.standard_section || row.name,
-    })),
-    studentlist: (Array.isArray(students) ? students : []).map((row: AnyRecord) => ({
-      ...row,
-      user_id: row.user_id ?? row.student_id ?? row.id,
-      id: row.id ?? row.student_id ?? row.user_id,
-      class: row.class || row.class_name || '',
-    })),
-    absentReasonlist: (Array.isArray(reasons) ? reasons : []).map((row: AnyRecord) => ({
+    standardlist,
+    studentlist: asRecordList(source?.studentlist).map(row => {
+      const userId = row.user_id ?? row.student_id ?? row.id;
+      return {
+        ...row,
+        user_id: userId,
+        id: row.id ?? row.student_id ?? row.user_id,
+        name: row.name || row.student_name || row.fullname || 'Student',
+        class: row.class || row.class_name || className(row.standardLink_id),
+      };
+    }),
+    absentReasonlist: asRecordList(source?.absentReasonlist).map(row => ({
       ...row,
       title: row.title || row.name,
     })),

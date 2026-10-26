@@ -1,9 +1,9 @@
 import React, {useCallback} from 'react';
 import {StyleSheet} from 'react-native';
-import {Badge, Card, Flex, Text, View} from '@ant-design/react-native';
+import {Badge, Flex, Text, View} from '@ant-design/react-native';
 import {AnyRecord, getNotifications} from '../api';
 import {useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
+import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
 import {colors, font, radius, spacing} from '../theme';
 
 /** Picks an icon from the notification's `type` string. */
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  unreadRow: {backgroundColor: colors.wathet, marginHorizontal: -spacing.m, paddingHorizontal: spacing.m},
+  unreadRow: {backgroundColor: colors.wathet, marginHorizontal: -spacing.l, paddingHorizontal: spacing.l},
   iconWrap: {
     width: 34,
     height: 34,

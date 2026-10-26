@@ -1,10 +1,10 @@
 import React, {useCallback, useState} from 'react';
 import {StyleSheet} from 'react-native';
-import {Badge, Card, Flex, NoticeBar, Text, View, WhiteSpace} from '@ant-design/react-native';
+import {Badge, Flex, NoticeBar, Text, View, WhiteSpace} from '@ant-design/react-native';
 import {Tabs} from '@ant-design/react-native';
 import {AnyRecord, getTimetableOverview} from '../api';
 import {useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen, StatCard} from '../components/ui';
+import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen, StatCard} from '../components/ui';
 import {colors, font, radius, spacing} from '../theme';
 
 type Overview = {

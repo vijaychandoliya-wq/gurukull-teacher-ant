@@ -2,7 +2,6 @@ import React, {useCallback, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {
   Button,
-  Card,
   DatePicker,
   Flex,
   Input,
@@ -26,6 +25,7 @@ import {
 import {formatDate, friendlyError, pickerData, useAsyncData} from '../hooks';
 import {
   AntIcon,
+  Card,
   EmptyBlock,
   LoadingBlock,
   PageTitle,

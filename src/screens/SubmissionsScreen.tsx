@@ -2,7 +2,6 @@ import React, {useCallback, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {
   Button,
-  Card,
   Flex,
   Input,
   Tabs,
@@ -15,6 +14,7 @@ import {AnyRecord, getAssignmentSubmissions, gradeSubmission, updateSubmissionGr
 import {friendlyError, useAsyncData} from '../hooks';
 import {
   AntIcon,
+  Card,
   EmptyBlock,
   LoadingBlock,
   PageTitle,

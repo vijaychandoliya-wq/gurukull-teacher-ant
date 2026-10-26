@@ -1,9 +1,9 @@
 import React, {useCallback} from 'react';
 import {StyleSheet, TouchableOpacity} from 'react-native';
-import {Badge, Card, Flex, List, Text, View, WhiteSpace} from '@ant-design/react-native';
+import {Badge, Flex, List, Text, View, WhiteSpace} from '@ant-design/react-native';
 import {AnyRecord, getLeaves, getNotices, getTasks, getTimetableOverview} from '../api';
 import {useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen, SectionTitle, StatCard} from '../components/ui';
+import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen, SectionTitle, StatCard} from '../components/ui';
 import {ScreenKey} from '../navigation';
 import {colors, font, radius, spacing} from '../theme';
 
@@ -75,7 +75,7 @@ export default function DashboardScreen({
       <PageTitle title={`Hello, ${firstName}`} subtitle="Here is your school day at a glance." />
 
       <Card style={styles.heroCard}>
-        <Card.Body>
+        <Card.Body style={styles.heroBody}>
           <Flex justify="between" align="center">
             <View style={styles.flex}>
               <Text style={styles.heroLabel}>TODAY · {data.summary?.today || new Date().toLocaleDateString('en-US', {weekday: 'long'})}</Text>
@@ -187,6 +187,7 @@ export default function DashboardScreen({
 const styles = StyleSheet.create({
   flex: {flex: 1},
   heroCard: {backgroundColor: colors.primary, borderColor: colors.primary, borderRadius: radius.l},
+  heroBody: {borderTopWidth: 0, paddingHorizontal: spacing.l, paddingVertical: spacing.l},
   heroLabel: {fontSize: font.s, fontWeight: '700', color: '#d6e4ff', letterSpacing: 1},
   heroValue: {fontSize: 21, fontWeight: '700', color: '#fff', marginTop: 5},
   heroMeta: {fontSize: font.main, color: '#e6f4ff', marginTop: 5},
@@ -208,7 +209,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     paddingVertical: spacing.m,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.m,
     alignItems: 'center',
   },
   actionIcon: {

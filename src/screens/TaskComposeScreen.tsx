@@ -2,7 +2,6 @@ import React, {useCallback, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {
   Button,
-  Card,
   Checkbox,
   DatePicker,
   Input,
@@ -22,7 +21,7 @@ import {
   getTaskTeachers,
 } from '../api';
 import {formatDateTime, friendlyError, pickerData, useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen, SectionTitle} from '../components/ui';
+import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen, SectionTitle} from '../components/ui';
 import {colors, font, spacing} from '../theme';
 
 const PRIORITIES = [

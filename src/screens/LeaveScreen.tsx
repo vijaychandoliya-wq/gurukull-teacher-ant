@@ -2,7 +2,6 @@ import React, {useCallback, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {
   Button,
-  Card,
   DatePicker,
   Flex,
   Input,
@@ -16,6 +15,7 @@ import {AnyRecord, applyLeave, getLeaveBalanceRows, getLeaveOptions, getLeaves} 
 import {formatDate, friendlyError, pickerData, useAsyncData} from '../hooks';
 import {
   AntIcon,
+  Card,
   EmptyBlock,
   LoadingBlock,
   PageTitle,

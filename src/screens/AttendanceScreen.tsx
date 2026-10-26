@@ -2,7 +2,6 @@ import React, {useCallback, useMemo, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {
   Button,
-  Card,
   DatePicker,
   Flex,
   List,
@@ -19,6 +18,7 @@ import {AnyRecord, getAttendanceForm, submitAttendance} from '../api';
 import {formatDate, friendlyError, pickerData, useAsyncData} from '../hooks';
 import {
   AntIcon,
+  Card,
   EmptyBlock,
   LoadingBlock,
   PageTitle,
@@ -198,7 +198,9 @@ export default function AttendanceScreen({
                 <View key={id} style={styles.studentRow}>
                   <Flex justify="between" align="center">
                     <View style={styles.studentInfo}>
-                      <Text style={[styles.studentName, absent && styles.studentAbsent]}>{student.name}</Text>
+                      <Text style={[styles.studentName, absent && styles.studentAbsent]}>
+                        {student.name || student.student_name || 'Student'}
+                      </Text>
                       <Text style={styles.studentClass}>{student.class}</Text>
                     </View>
                     <Switch checked={absent} onChange={value => toggleAbsent(id, value)} color={colors.danger} />

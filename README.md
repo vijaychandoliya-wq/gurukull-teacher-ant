@@ -1,4 +1,4 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+This is the common multi-school Gurukull teacher app, built with [**React Native**](https://reactnative.dev). It uses the shared API at `https://gurukul-worker-api.gurukull.workers.dev`; teachers enter their school code at sign-in and the Worker resolves the configured school tenant from that code.
 
 # Getting Started
 

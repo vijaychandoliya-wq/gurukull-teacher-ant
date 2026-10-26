@@ -1,9 +1,9 @@
 import React, {useCallback} from 'react';
 import {StyleSheet} from 'react-native';
-import {Badge, Button, Card, Flex, Text, View, WhiteSpace} from '@ant-design/react-native';
+import {Badge, Button, Flex, Text, View, WhiteSpace} from '@ant-design/react-native';
 import {AnyRecord, getExams} from '../api';
 import {useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
+import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
 import {ScreenKey, ScreenParams} from '../navigation';
 import {colors, font, radius, spacing} from '../theme';
 

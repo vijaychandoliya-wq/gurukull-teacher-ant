@@ -4,7 +4,7 @@
  * Every screen composes these rather than restyling Ant primitives inline, so
  * headings, empty states and status chips stay identical across the app.
  */
-import React, {ReactNode} from 'react';
+import React, {ComponentProps, ReactNode} from 'react';
 import {
   KeyboardAvoidingView,
   RefreshControl,
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import {
   ActivityIndicator,
-  Card,
+  Card as AntCard,
   Flex,
   List,
   NoticeBar,
@@ -137,6 +137,43 @@ export function StatusTag({status}: {status?: string | null}) {
   );
 }
 
+/**
+ * Ant card with even inset on every side.
+ *
+ * The library's card body only pads vertically, and the header only indents
+ * from the left, so titles and body text sit on the card edge.
+ */
+export function Card({children, style, ...rest}: ComponentProps<typeof AntCard>) {
+  const hasHeader = React.Children.toArray(children).some(
+    child => React.isValidElement(child) && child.type === AntCard.Header,
+  );
+  return (
+    <AntCard style={[styles.cardShell, style]} {...rest}>
+      {React.Children.map(children, child => {
+        if (!React.isValidElement(child)) {
+          return child;
+        }
+        const extra = (child.props as {style?: object}).style;
+        if (child.type === AntCard.Body) {
+          return React.cloneElement(child as React.ReactElement<{style?: object}>, {
+            style: [styles.cardBody, !hasHeader && styles.cardBodyPlain, extra],
+          });
+        }
+        if (child.type === AntCard.Header) {
+          return React.cloneElement(child as React.ReactElement<{style?: object}>, {
+            style: [styles.cardHeader, extra],
+          });
+        }
+        return child;
+      })}
+    </AntCard>
+  );
+}
+type CardSlotProps = {style?: object; styles?: object; children?: ReactNode; [key: string]: any};
+Card.Header = AntCard.Header as React.ComponentType<CardSlotProps>;
+Card.Body = AntCard.Body as React.ComponentType<CardSlotProps>;
+Card.Footer = AntCard.Footer as React.ComponentType<CardSlotProps>;
+
 /** Compact stat tile used on the dashboard. */
 export function StatCard({
   icon,
@@ -151,7 +188,7 @@ export function StatCard({
 }) {
   return (
     <Card style={styles.statCard}>
-      <Card.Body>
+      <Card.Body style={styles.statBody}>
         <AntIcon name={icon} color={color} />
         <Text style={styles.statNumber}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
@@ -288,7 +325,17 @@ export const styles = StyleSheet.create({
   buttonLabelOnPrimary: {fontSize: font.l, color: '#fff', marginLeft: 6},
   buttonLabelDanger: {fontSize: font.l, color: colors.danger, marginLeft: 6},
   centeredBlock: {flex: 1, minHeight: 300, alignItems: 'center', justifyContent: 'center'},
-  pageContent: {padding: spacing.l, paddingBottom: 40},
+  pageContent: {paddingHorizontal: spacing.l, paddingTop: spacing.l, paddingBottom: 40},
+  cardShell: {borderRadius: radius.l},
+  cardHeader: {
+    marginLeft: 0,
+    paddingLeft: spacing.l,
+    paddingRight: spacing.l,
+    paddingVertical: spacing.m,
+  },
+  cardBody: {paddingHorizontal: spacing.l, paddingVertical: spacing.l},
+  cardBodyPlain: {borderTopWidth: 0},
+  statBody: {paddingHorizontal: spacing.m, paddingVertical: spacing.m},
   pageHeading: {marginBottom: spacing.l + 2},
   pageTitle: {fontSize: 25, lineHeight: 32, fontWeight: '700', color: colors.text},
   pageSubtitle: {fontSize: font.m, lineHeight: 21, color: colors.textSecondary, marginTop: 3},

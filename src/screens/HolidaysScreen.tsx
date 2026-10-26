@@ -1,9 +1,9 @@
 import React, {useCallback} from 'react';
 import {StyleSheet} from 'react-native';
-import {Card, Flex, Text, View} from '@ant-design/react-native';
+import {Flex, Text, View} from '@ant-design/react-native';
 import {AnyRecord, getHolidays} from '../api';
 import {useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
+import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
 import {colors, font, radius, spacing} from '../theme';
 
 /** `26-12-2026` → `{day: '26', month: 'DEC'}` for the calendar chip. */

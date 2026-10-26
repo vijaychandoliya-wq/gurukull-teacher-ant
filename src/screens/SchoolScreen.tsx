@@ -1,9 +1,9 @@
 import React, {useCallback} from 'react';
 import {Image, StyleSheet} from 'react-native';
-import {Card, Text, View, WhiteSpace} from '@ant-design/react-native';
+import {Text, View, WhiteSpace} from '@ant-design/react-native';
 import {AnyRecord, getSchool} from '../api';
 import {useAsyncData} from '../hooks';
-import {AntIcon, DetailRows, LoadingBlock, PageTitle, Screen, SectionTitle} from '../components/ui';
+import {AntIcon, Card, DetailRows, LoadingBlock, PageTitle, Screen, SectionTitle} from '../components/ui';
 import {colors, font, radius} from '../theme';
 
 export default function SchoolScreen() {

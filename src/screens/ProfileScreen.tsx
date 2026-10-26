@@ -1,9 +1,9 @@
 import React from 'react';
 import {Image, StyleSheet} from 'react-native';
-import {Button, Card, Text, View, WhiteSpace} from '@ant-design/react-native';
+import {Button, Text, View, WhiteSpace} from '@ant-design/react-native';
 import {AnyRecord} from '../api';
 import {initials} from '../hooks';
-import {ButtonLabel, DetailRows, PageTitle, Screen, SectionTitle} from '../components/ui';
+import {ButtonLabel, Card, DetailRows, PageTitle, Screen, SectionTitle} from '../components/ui';
 import {ScreenKey} from '../navigation';
 import {colors, font, radius} from '../theme';
 

@@ -1,9 +1,9 @@
 import React, {useCallback, useState} from 'react';
 import {StyleSheet} from 'react-native';
-import {Card, DatePicker, Flex, List, Picker, Text, View, WhiteSpace} from '@ant-design/react-native';
+import {DatePicker, Flex, List, Picker, Text, View, WhiteSpace} from '@ant-design/react-native';
 import {AnyRecord, getAbsentList} from '../api';
 import {formatDate, useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen, SectionTitle} from '../components/ui';
+import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen, SectionTitle} from '../components/ui';
 import {ScreenParams} from '../navigation';
 import {colors, font, radius, spacing} from '../theme';
 
