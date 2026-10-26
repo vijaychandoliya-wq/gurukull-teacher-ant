@@ -218,6 +218,18 @@ export async function logout() {
 export const hasSession = async () => Boolean(await getSessionToken());
 export const clearSession = async () => clearSessionToken();
 
+export async function getLocalePreference():Promise<AnyRecord>{
+  const payload=await request('/api/portal/locale-preference');
+  return payload?.data || {};
+}
+
+export async function saveLocalePreference(localeTag:string,version:number):Promise<AnyRecord>{
+  const payload=await request('/api/portal/locale-preference',{
+    method:'PUT',body:JSON.stringify({mode:'explicit',localeTag,version}),headers:{'Content-Type':'application/json','Idempotency-Key':`locale_${Date.now()}_${Math.random().toString(36).slice(2,10)}`},
+  });
+  return payload?.data || {};
+}
+
 export const changePassword = (values: {current_password: string; password: string; password_confirmation: string}) =>
   request('/api/teacher/change/password', {
     method: 'POST',

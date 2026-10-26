@@ -1,11 +1,12 @@
-import React from 'react';
+import React,{useEffect,useState} from 'react';
 import {Image, StyleSheet} from 'react-native';
 import {Button, Text, View, WhiteSpace} from '@ant-design/react-native';
-import {AnyRecord} from '../api';
+import {AnyRecord,getLocalePreference,saveLocalePreference} from '../api';
 import {initials} from '../hooks';
 import {ButtonLabel, Card, DetailRows, PageTitle, Screen, SectionTitle} from '../components/ui';
 import {ScreenKey} from '../navigation';
 import {colors, font, radius} from '../theme';
+import {AVAILABLE_MOBILE_LOCALES,useLanguage} from '../i18n';
 
 export default function ProfileScreen({
   profile,
@@ -14,6 +15,11 @@ export default function ProfileScreen({
   profile: AnyRecord | null;
   navigate: (screen: ScreenKey) => void;
 }) {
+  const {locale,setLocale,t}=useLanguage();
+  const [preferenceVersion,setPreferenceVersion]=useState(0);
+  const [savingLanguage,setSavingLanguage]=useState(false);
+  useEffect(()=>{Promise.resolve(getLocalePreference()).then(value=>{if(value&&AVAILABLE_MOBILE_LOCALES.some(option=>option.tag===value.localeTag))void setLocale(value.localeTag);setPreferenceVersion(Number(value?.version)||0);}).catch(()=>undefined);},[setLocale]);
+  const saveLanguage=async()=>{try{setSavingLanguage(true);const saved=await saveLocalePreference(locale,preferenceVersion);setPreferenceVersion(Number(saved.version)||preferenceVersion+1);}finally{setSavingLanguage(false);}};
   const rows: [string, any][] = [
     ['Employee ID', profile?.employeeId],
     ['Designation', profile?.designation_name || profile?.designation],
@@ -49,6 +55,17 @@ export default function ProfileScreen({
       <SectionTitle title="Account details" />
       <DetailRows rows={rows} />
 
+      <WhiteSpace size="lg" />
+      <Card style={styles.profileCard}>
+        <Card.Header title={t('language')} />
+        <Card.Body>
+          <Text style={styles.languageHint}>{t('languageHelp')}</Text>
+          <View style={styles.languageOptions}>{AVAILABLE_MOBILE_LOCALES.map(option=><Button key={option.tag} type={locale===option.tag?'primary':'ghost'} size="small" style={styles.languageButton} onPress={()=>void setLocale(option.tag)}>{option.label}</Button>)}</View>
+          <WhiteSpace size="md" />
+          <Button type="primary" loading={savingLanguage} onPress={()=>void saveLanguage()}>{t('saveLanguage')}</Button>
+        </Card.Body>
+      </Card>
+
       <WhiteSpace size="xl" />
       <Button onPress={() => navigate('changePassword')}>
         <ButtonLabel icon="lock">Change password</ButtonLabel>
@@ -73,4 +90,7 @@ const styles = StyleSheet.create({
   avatarInitials: {fontSize: 28, fontWeight: '700', color: colors.primary},
   name: {fontSize: 21, fontWeight: '700', color: colors.text, textAlign: 'center', marginTop: 12},
   role: {fontSize: font.m, color: colors.textSecondary, textAlign: 'center', marginTop: 3},
+  languageHint:{fontSize:font.m,color:colors.textSecondary,lineHeight:20},
+  languageOptions:{flexDirection:'row',flexWrap:'wrap',gap:8,marginTop:12},
+  languageButton:{flex:1},
 });

@@ -39,6 +39,7 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 
 import {Drawer} from '@ant-design/react-native';
 import enUS from '@ant-design/react-native/lib/locale-provider/en_US';
+import {LanguageProvider} from './src/i18n';
 
 function DrawerSidebar({
   profile,
@@ -277,7 +278,7 @@ export default function App() {
         {/* Ant Design Mobile ships Chinese copy by default, which surfaced as
           "请选择" on every picker. */}
       <Provider theme={antdTheme} locale={enUS}>
-          <Root />
+          <LanguageProvider><Root /></LanguageProvider>
         </Provider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

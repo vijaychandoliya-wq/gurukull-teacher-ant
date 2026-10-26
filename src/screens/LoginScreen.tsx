@@ -1,13 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {Image, KeyboardAvoidingView, ScrollView, StatusBar, StyleSheet} from 'react-native';
-import {Button, Form, Input, Text, WhiteSpace} from '@ant-design/react-native';
+import {Button, Form, Input, Text, View, WhiteSpace} from '@ant-design/react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {getSchoolCode, login, setSchoolCode} from '../api';
 import {friendlyError} from '../hooks';
 import {AntIcon, Card, ErrorBar} from '../components/ui';
 import {colors, font, radius, spacing} from '../theme';
+import {AVAILABLE_MOBILE_LOCALES,useLanguage} from '../i18n';
 
 export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
+  const {locale,setLocale,t}=useLanguage();
   // The same binary is used by every configured Gurukull school.
   const [schoolCode, setSchool] = useState('');
   const [identifier, setIdentifier] = useState('');
@@ -51,16 +53,17 @@ export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
             style={styles.brandMark}
             resizeMode="cover"
           />
-          <Text style={styles.title}>Dronacharya</Text>
+          <View style={styles.languageRow}>{AVAILABLE_MOBILE_LOCALES.map(option=><Button key={option.tag} type={locale===option.tag?'primary':'ghost'} size="small" style={styles.languageButton} onPress={()=>void setLocale(option.tag)}>{option.label}</Button>)}</View>
+            <Text style={styles.title}>Dronacharya</Text>
           <Text style={styles.subtitle}>Your classes, timetable and leave requests in one place.</Text>
           <WhiteSpace size="xl" />
           <Card style={styles.card}>
-            <Card.Header title="Teacher sign in" thumb={<AntIcon name="safety-certificate" />} />
+            <Card.Header title={t('teacherSignIn')} thumb={<AntIcon name="safety-certificate" />} />
             <Card.Body>
               <ErrorBar message={error} onClose={() => setError('')} />
               <WhiteSpace size="lg" />
               <Form layout="vertical">
-                <Form.Item label="School code" required>
+                <Form.Item label={t('schoolCode')} required>
                   <Input
                     value={schoolCode}
                     onChangeText={setSchool}
@@ -70,7 +73,7 @@ export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
                     prefix={<AntIcon name="bank" color={colors.weak} size={19} />}
                   />
                 </Form.Item>
-                <Form.Item label="Mobile number or email" required>
+                <Form.Item label={t('identifier')} required>
                   <Input
                     value={identifier}
                     onChangeText={setIdentifier}
@@ -82,7 +85,7 @@ export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
                     allowClear
                   />
                 </Form.Item>
-                <Form.Item label="Password" required>
+                <Form.Item label={t('password')} required>
                   <Input
                     value={password}
                     onChangeText={setPassword}
@@ -94,7 +97,7 @@ export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
               </Form>
               <WhiteSpace size="lg" />
               <Button type="primary" size="large" loading={loading} disabled={loading} onPress={submit}>
-                Sign in
+                {t('signIn')}
               </Button>
             </Card.Body>
           </Card>
@@ -111,6 +114,8 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   safe: {flex: 1, backgroundColor: colors.background},
   content: {flexGrow: 1, justifyContent: 'center', padding: spacing.xl},
+  languageRow: {flexDirection:'row', justifyContent:'flex-end', gap:6, marginBottom:12},
+  languageButton:{flex:1},
   brandMark: {
     width: 72,
     height: 72,
