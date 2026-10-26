@@ -2,7 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {Image, StyleSheet} from 'react-native';
 import {Button, Text, View, WhiteSpace} from '@ant-design/react-native';
 import {AnyRecord,getLocalePreference,saveLocalePreference} from '../api';
-import {initials} from '../hooks';
+import {friendlyError,initials} from '../hooks';
 import {ButtonLabel, Card, DetailRows, PageTitle, Screen, SectionTitle} from '../components/ui';
 import {ScreenKey} from '../navigation';
 import {colors, font, radius} from '../theme';
@@ -18,8 +18,9 @@ export default function ProfileScreen({
   const {locale,setLocale,t}=useLanguage();
   const [preferenceVersion,setPreferenceVersion]=useState(0);
   const [savingLanguage,setSavingLanguage]=useState(false);
+  const [languageError,setLanguageError]=useState('');
   useEffect(()=>{Promise.resolve(getLocalePreference()).then(value=>{if(value&&AVAILABLE_MOBILE_LOCALES.some(option=>option.tag===value.localeTag))void setLocale(value.localeTag);setPreferenceVersion(Number(value?.version)||0);}).catch(()=>undefined);},[setLocale]);
-  const saveLanguage=async()=>{try{setSavingLanguage(true);const saved=await saveLocalePreference(locale,preferenceVersion);setPreferenceVersion(Number(saved.version)||preferenceVersion+1);}finally{setSavingLanguage(false);}};
+  const saveLanguage=async()=>{try{setSavingLanguage(true);setLanguageError('');const saved=await saveLocalePreference(locale,preferenceVersion);setPreferenceVersion(Number(saved.version)||preferenceVersion+1);}catch(error){setLanguageError(friendlyError(error));}finally{setSavingLanguage(false);}};
   const rows: [string, any][] = [
     ['Employee ID', profile?.employeeId],
     ['Designation', profile?.designation_name || profile?.designation],
@@ -61,6 +62,7 @@ export default function ProfileScreen({
         <Card.Body>
           <Text style={styles.languageHint}>{t('languageHelp')}</Text>
           <View style={styles.languageOptions}>{AVAILABLE_MOBILE_LOCALES.map(option=><Button key={option.tag} type={locale===option.tag?'primary':'ghost'} size="small" style={styles.languageButton} onPress={()=>void setLocale(option.tag)}>{option.label}</Button>)}</View>
+          {languageError?<Text style={styles.languageError}>{languageError}</Text>:null}
           <WhiteSpace size="md" />
           <Button type="primary" loading={savingLanguage} onPress={()=>void saveLanguage()}>{t('saveLanguage')}</Button>
         </Card.Body>
@@ -93,4 +95,5 @@ const styles = StyleSheet.create({
   languageHint:{fontSize:font.m,color:colors.textSecondary,lineHeight:20},
   languageOptions:{flexDirection:'row',flexWrap:'wrap',gap:8,marginTop:12},
   languageButton:{flex:1},
+  languageError:{fontSize:font.m,color:'#cf1322',marginTop:10,lineHeight:20},
 });
