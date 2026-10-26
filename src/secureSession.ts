@@ -15,6 +15,10 @@ async function migrate(){
  })().catch(error=>{migration=undefined;throw error;});}
  await migration;
 }
-export async function getSessionToken(){await migrate();const value=await Keychain.getGenericPassword({service});return value?value.password:null;}
-export async function setSessionToken(token:string){await migrate();if(!await Keychain.setGenericPassword('session',token,{service,accessible:Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY}))throw new Error('Secure session storage unavailable');await AsyncStorage.removeItem(legacyKey);}
-export async function clearSessionToken(){if(migration)await migration.catch(()=>{});await Keychain.resetGenericPassword({service});await AsyncStorage.removeItem(legacyKey);}
+// Order native reads/writes so a late migration or write cannot resurrect a
+// session after an already-requested logout. Failures do not poison the queue.
+let operations:Promise<unknown>=Promise.resolve();
+function serial<T>(work:()=>Promise<T>):Promise<T>{const result=operations.then(work,work);operations=result.then(()=>undefined,()=>undefined);return result;}
+export function getSessionToken(){return serial(async()=>{await migrate();const value=await Keychain.getGenericPassword({service});return value?value.password:null;});}
+export function setSessionToken(token:string){return serial(async()=>{await migrate();if(!await Keychain.setGenericPassword('session',token,{service,accessible:Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY}))throw new Error('Secure session storage unavailable');await AsyncStorage.removeItem(legacyKey);});}
+export function clearSessionToken(){return serial(async()=>{if(migration)await migration.catch(()=>{});await Keychain.resetGenericPassword({service});await AsyncStorage.removeItem(legacyKey);});}

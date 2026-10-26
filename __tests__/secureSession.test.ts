@@ -15,3 +15,11 @@ test('stores new sessions only in native secure storage and erases them on logou
 test('does not claim success if secure storage refuses a write',async()=>{
  keychain.setGenericPassword.mockResolvedValueOnce(false);await expect(session.setSessionToken('scalar')).rejects.toThrow('Secure session storage unavailable');
 });
+
+test('a pending secure write cannot resurrect a session after logout',async()=>{
+ let release!:()=>void,started!:()=>void;const pending=new Promise<void>(r=>{release=r;}),writing=new Promise<void>(r=>{started=r;});
+ const save=keychain.setGenericPassword.getMockImplementation();
+ keychain.setGenericPassword.mockImplementationOnce(async(...args:unknown[])=>{started();await pending;return save(...args);});
+ const write=session.setSessionToken('scalar-session');await writing;const clear=session.clearSessionToken();release();await Promise.all([write,clear]);
+ expect(await session.getSessionToken()).toBeNull();
+});
