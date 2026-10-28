@@ -1,5 +1,5 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import {
   Button,
   DatePicker,
@@ -11,8 +11,14 @@ import {
   Toast,
   WhiteSpace,
 } from '@ant-design/react-native';
-import {AnyRecord, applyLeave, getLeaveBalanceRows, getLeaveOptions, getLeaves} from '../api';
-import {formatDate, friendlyError, pickerData, useAsyncData} from '../hooks';
+import {
+  AnyRecord,
+  applyLeave,
+  getLeaveBalanceRows,
+  getLeaveOptions,
+  getLeaves,
+} from '../api';
+import { formatDate, friendlyError, pickerData, useAsyncData } from '../hooks';
 import {
   AntIcon,
   Card,
@@ -23,13 +29,23 @@ import {
   Screen,
   SectionTitle,
 } from '../components/ui';
-import {colors} from '../theme';
+import { useThemedStyles, type AppColors } from '../theme';
 
-type LeaveData = {options: AnyRecord; leaves: AnyRecord[]; balance: AnyRecord[]};
+type LeaveData = {
+  options: AnyRecord;
+  leaves: AnyRecord[];
+  balance: AnyRecord[];
+};
 
-const EMPTY: LeaveData = {options: {leavelist: [], reasonlist: [], session: []}, leaves: [], balance: []};
+const EMPTY: LeaveData = {
+  options: { leavelist: [], reasonlist: [], session: [] },
+  leaves: [],
+  balance: [],
+};
 
 export default function LeaveScreen() {
+  const styles = useThemedStyles(createStyles);
+
   const loader = useCallback(async (): Promise<LeaveData> => {
     const [options, leaves, balance] = await Promise.all([
       getLeaveOptions(),
@@ -38,10 +54,19 @@ export default function LeaveScreen() {
       // types should still get the application form.
       getLeaveBalanceRows().catch(() => []),
     ]);
-    return {options: options || EMPTY.options, leaves, balance};
+    return { options: options || EMPTY.options, leaves, balance };
   }, []);
 
-  const {data, loading, refreshing, error, setError, reload, refresh, clearError} = useAsyncData(loader, EMPTY);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    setError,
+    reload,
+    refresh,
+    clearError,
+  } = useAsyncData(loader, EMPTY);
 
   const [submitting, setSubmitting] = useState(false);
   const [fromDate, setFromDate] = useState(new Date());
@@ -87,23 +112,44 @@ export default function LeaveScreen() {
     return <LoadingBlock />;
   }
 
-  const {options, leaves, balance} = data;
+  const { options, leaves, balance } = data;
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
-      <PageTitle title="Apply leave" subtitle="Submit a request and track its approval status." />
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
+      <PageTitle
+        title="Apply leave"
+        subtitle="Submit a request and track its approval status."
+      />
 
       {balance.length ? (
         <>
           <Card>
-            <Card.Header title="Leave balance" thumb={<AntIcon name="pie-chart" />} />
+            <Card.Header
+              title="Leave balance"
+              thumb={<AntIcon name="pie-chart" />}
+            />
             <Card.Body>
               {balance.map(row => (
-                <Flex key={row.name} justify="between" align="center" style={styles.balanceRow}>
+                <Flex
+                  key={row.name}
+                  justify="between"
+                  align="center"
+                  style={styles.balanceRow}
+                >
                   <Text style={styles.balanceName}>{row.name}</Text>
                   <Text style={styles.balanceValue}>
-                    <Text style={styles.balanceAvailable}>{row.leaveAvailable}</Text>
-                    <Text style={styles.balanceTotal}> / {row.totalDays} left</Text>
+                    <Text style={styles.balanceAvailable}>
+                      {row.leaveAvailable}
+                    </Text>
+                    <Text style={styles.balanceTotal}>
+                      {' '}
+                      / {row.totalDays} left
+                    </Text>
                   </Text>
                 </Flex>
               ))}
@@ -114,7 +160,10 @@ export default function LeaveScreen() {
       ) : null}
 
       <Card>
-        <Card.Header title="New leave request" thumb={<AntIcon name="form" />} />
+        <Card.Header
+          title="New leave request"
+          thumb={<AntIcon name="form" />}
+        />
         <Card.Body>
           <List>
             <Picker
@@ -122,7 +171,8 @@ export default function LeaveScreen() {
               cols={1}
               value={leaveType}
               onChange={setLeaveType}
-              onOk={setLeaveType}>
+              onOk={setLeaveType}
+            >
               <List.Item arrow="horizontal">Leave type</List.Item>
             </Picker>
             <Picker
@@ -130,7 +180,8 @@ export default function LeaveScreen() {
               cols={1}
               value={reason}
               onChange={setReason}
-              onOk={setReason}>
+              onOk={setReason}
+            >
               <List.Item arrow="horizontal">Reason</List.Item>
             </Picker>
             <Picker
@@ -138,13 +189,24 @@ export default function LeaveScreen() {
               cols={1}
               value={session}
               onChange={setSession}
-              onOk={setSession}>
+              onOk={setSession}
+            >
               <List.Item arrow="horizontal">Session</List.Item>
             </Picker>
-            <DatePicker value={fromDate} mode="date" minDate={new Date()} onChange={setFromDate}>
+            <DatePicker
+              value={fromDate}
+              mode="date"
+              minDate={new Date()}
+              onChange={setFromDate}
+            >
               <List.Item arrow="horizontal">From date</List.Item>
             </DatePicker>
-            <DatePicker value={toDate} mode="date" minDate={fromDate} onChange={setToDate}>
+            <DatePicker
+              value={toDate}
+              mode="date"
+              minDate={fromDate}
+              onChange={setToDate}
+            >
               <List.Item arrow="horizontal">To date</List.Item>
             </DatePicker>
           </List>
@@ -162,7 +224,13 @@ export default function LeaveScreen() {
               space for it, so the next element lands on top of it. */}
           <WhiteSpace size="xl" />
           <WhiteSpace size="lg" />
-          <Button type="primary" size="large" loading={submitting} disabled={submitting} onPress={submit}>
+          <Button
+            type="primary"
+            size="large"
+            loading={submitting}
+            disabled={submitting}
+            onPress={submit}
+          >
             Submit request
           </Button>
         </Card.Body>
@@ -179,28 +247,44 @@ export default function LeaveScreen() {
             icon="calendar"
             meta={[
               `${item.from_date} — ${item.to_date}`,
-              `${item.reason || 'Reason'} · ${item.leave_days || 1} day(s) · ${item.session || 'Full day'}`,
+              `${item.reason || 'Reason'} · ${item.leave_days || 1} day(s) · ${
+                item.session || 'Full day'
+              }`,
               item.approved_by ? `Approved by ${item.approved_by}` : null,
             ]}
             body={item.remarks}
           />
         ))
       ) : (
-        <EmptyBlock title="No leave requests" message="Your submitted requests will appear here." icon="form" />
+        <EmptyBlock
+          title="No leave requests"
+          message="Your submitted requests will appear here."
+          icon="form"
+        />
       )}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  fieldLabel: {fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 8},
-  balanceRow: {
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  balanceName: {fontSize: 14, color: colors.text},
-  balanceValue: {fontSize: 14},
-  balanceAvailable: {fontSize: 16, fontWeight: '700', color: colors.primary},
-  balanceTotal: {fontSize: 12, color: colors.textSecondary},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    fieldLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    balanceRow: {
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    balanceName: { fontSize: 14, color: colors.text },
+    balanceValue: { fontSize: 14 },
+    balanceAvailable: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    balanceTotal: { fontSize: 12, color: colors.textSecondary },
+  });

@@ -1,5 +1,5 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import {
   Button,
   DatePicker,
@@ -22,7 +22,7 @@ import {
   getAssignments,
   getClasses,
 } from '../api';
-import {formatDate, friendlyError, pickerData, useAsyncData} from '../hooks';
+import { formatDate, friendlyError, pickerData, useAsyncData } from '../hooks';
 import {
   AntIcon,
   Card,
@@ -34,55 +34,81 @@ import {
   SectionTitle,
   ButtonLabel,
 } from '../components/ui';
-import {ScreenKey, ScreenParams} from '../navigation';
-import {colors, spacing} from '../theme';
+import { ScreenKey, ScreenParams } from '../navigation';
+import { spacing, useThemedStyles, type AppColors } from '../theme';
 
-const TABS: {title: string; scope: 'active' | 'completed'}[] = [
-  {title: 'Active', scope: 'active'},
-  {title: 'Completed', scope: 'completed'},
+const TABS: { title: string; scope: 'active' | 'completed' }[] = [
+  { title: 'Active', scope: 'active' },
+  { title: 'Completed', scope: 'completed' },
 ];
 
-type AssignmentData = {items: AnyRecord[]; classes: AnyRecord[]};
+type AssignmentData = { items: AnyRecord[]; classes: AnyRecord[] };
 
-const EMPTY: AssignmentData = {items: [], classes: []};
+const EMPTY: AssignmentData = { items: [], classes: [] };
 
 export default function AssignmentsScreen({
   navigate,
 }: {
   navigate: (screen: ScreenKey, params?: ScreenParams) => void;
 }) {
+  const styles = useThemedStyles(createStyles);
+
   const [scope, setScope] = useState<'active' | 'completed'>('active');
   const [composing, setComposing] = useState(false);
 
   const loader = useCallback(async (): Promise<AssignmentData> => {
-    const [items, classes] = await Promise.all([getAssignments(scope), getClasses()]);
-    return {items, classes};
+    const [items, classes] = await Promise.all([
+      getAssignments(scope),
+      getClasses(),
+    ]);
+    return { items, classes };
   }, [scope]);
 
-  const {data, loading, refreshing, error, setError, reload, refresh, clearError} = useAsyncData(loader, EMPTY);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    setError,
+    reload,
+    refresh,
+    clearError,
+  } = useAsyncData(loader, EMPTY);
 
   const remove = (item: AnyRecord) => {
-    Modal.alert('Delete assignment', `Remove “${item.title || 'this assignment'}”?`, [
-      {text: 'Cancel', style: 'cancel'},
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteAssignment(item.id);
-            Toast.success('Assignment deleted', 2);
-            await reload();
-          } catch (reason) {
-            setError(friendlyError(reason));
-          }
+    Modal.alert(
+      'Delete assignment',
+      `Remove “${item.title || 'this assignment'}”?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAssignment(item.id);
+              Toast.success('Assignment deleted', 2);
+              await reload();
+            } catch (reason) {
+              setError(friendlyError(reason));
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
-      <PageTitle title="Assignments" subtitle="Set graded work and follow it through approval." />
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
+      <PageTitle
+        title="Assignments"
+        subtitle="Set graded work and follow it through approval."
+      />
 
       <Button type="primary" onPress={() => setComposing(value => !value)}>
         <ButtonLabel icon={composing ? 'up' : 'plus'} tone="onPrimary">
@@ -106,11 +132,12 @@ export default function AssignmentsScreen({
       ) : null}
 
       <Tabs
-        tabs={TABS.map(tab => ({title: tab.title, key: tab.scope}))}
+        tabs={TABS.map(tab => ({ title: tab.title, key: tab.scope }))}
         page={TABS.findIndex(tab => tab.scope === scope)}
         onChange={(_tab, index) => setScope(TABS[index].scope)}
         swipeable={false}
-        noRenderContent>
+        noRenderContent
+      >
         <View />
       </Tabs>
       <WhiteSpace size="lg" />
@@ -119,7 +146,11 @@ export default function AssignmentsScreen({
         <LoadingBlock />
       ) : data.items.length ? (
         <>
-          <SectionTitle title={`${data.items.length} ${data.items.length === 1 ? 'assignment' : 'assignments'}`} />
+          <SectionTitle
+            title={`${data.items.length} ${
+              data.items.length === 1 ? 'assignment' : 'assignments'
+            }`}
+          />
           {data.items.map((item, index) => (
             <RecordCard
               key={item.id || index}
@@ -127,7 +158,9 @@ export default function AssignmentsScreen({
               status={item.status_display || item.status}
               icon="file-text"
               meta={[
-                `${item.subject_name || item.subject || ''} · ${item.class_name || item.class || ''}`,
+                `${item.subject_name || item.subject || ''} · ${
+                  item.class_name || item.class || ''
+                }`,
                 item.assigned_date ? `Assigned ${item.assigned_date}` : null,
                 item.submission_date ? `Due ${item.submission_date}` : null,
                 item.marks ? `Max marks: ${item.marks}` : null,
@@ -144,14 +177,21 @@ export default function AssignmentsScreen({
                       onPress={() =>
                         navigate('submissions', {
                           assignmentId: item.id,
-                          title: `${item.title || 'Assignment'} · ${item.class_name || item.class || ''}`,
+                          title: `${item.title || 'Assignment'} · ${
+                            item.class_name || item.class || ''
+                          }`,
                           maxMarks: item.marks,
                         })
-                      }>
+                      }
+                    >
                       Submissions
                     </Button>
                     <View style={styles.footerGap} />
-                    <Button size="small" style={styles.footerAction} onPress={() => remove(item)}>
+                    <Button
+                      size="small"
+                      style={styles.footerAction}
+                      onPress={() => remove(item)}
+                    >
                       <Text style={styles.deleteText}>Delete</Text>
                     </Button>
                   </Flex>
@@ -161,7 +201,11 @@ export default function AssignmentsScreen({
           ))}
         </>
       ) : (
-        <EmptyBlock title="No assignments" message="Assignments you create appear here." icon="file-text" />
+        <EmptyBlock
+          title="No assignments"
+          message="Assignments you create appear here."
+          icon="file-text"
+        />
       )}
     </Screen>
   );
@@ -230,7 +274,10 @@ function AssignmentForm({
 
   return (
     <Card>
-      <Card.Header title="New assignment" thumb={<AntIcon name="plus-circle" />} />
+      <Card.Header
+        title="New assignment"
+        thumb={<AntIcon name="plus-circle" />}
+      />
       <Card.Body>
         <List>
           <Picker
@@ -238,23 +285,49 @@ function AssignmentForm({
             cols={1}
             value={classId}
             onChange={chooseClass}
-            onOk={chooseClass}>
+            onOk={chooseClass}
+          >
             <List.Item arrow="horizontal">Class</List.Item>
           </Picker>
-          <Picker data={pickerData(subjects)} cols={1} value={subjectId} onChange={setSubjectId} onOk={setSubjectId}>
+          <Picker
+            data={pickerData(subjects)}
+            cols={1}
+            value={subjectId}
+            onChange={setSubjectId}
+            onOk={setSubjectId}
+          >
             <List.Item arrow="horizontal">Subject</List.Item>
           </Picker>
-          <DatePicker value={assignedDate} mode="date" onChange={setAssignedDate}>
+          <DatePicker
+            value={assignedDate}
+            mode="date"
+            onChange={setAssignedDate}
+          >
             <List.Item arrow="horizontal">Assigned on</List.Item>
           </DatePicker>
-          <DatePicker value={dueDate} mode="date" minDate={assignedDate} onChange={setDueDate}>
+          <DatePicker
+            value={dueDate}
+            mode="date"
+            minDate={assignedDate}
+            onChange={setDueDate}
+          >
             <List.Item arrow="horizontal">Submission date</List.Item>
           </DatePicker>
         </List>
         <WhiteSpace size="lg" />
-        <Input value={title} onChangeText={setTitle} placeholder="Assignment title" allowClear />
+        <Input
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Assignment title"
+          allowClear
+        />
         <WhiteSpace size="lg" />
-        <Input value={marks} onChangeText={setMarks} placeholder="Maximum marks" keyboardType="number-pad" />
+        <Input
+          value={marks}
+          onChangeText={setMarks}
+          placeholder="Maximum marks"
+          keyboardType="number-pad"
+        />
         <WhiteSpace size="lg" />
         <Input.TextArea
           value={description}
@@ -265,7 +338,12 @@ function AssignmentForm({
           showCount
         />
         <WhiteSpace size="lg" />
-        <Button type="primary" loading={saving} disabled={saving} onPress={save}>
+        <Button
+          type="primary"
+          loading={saving}
+          disabled={saving}
+          onPress={save}
+        >
           Save assignment
         </Button>
       </Card.Body>
@@ -273,8 +351,9 @@ function AssignmentForm({
   );
 }
 
-const styles = StyleSheet.create({
-  footerAction: {flex: 1},
-  footerGap: {width: spacing.s},
-  deleteText: {color: colors.danger},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    footerAction: { flex: 1 },
+    footerGap: { width: spacing.s },
+    deleteText: { color: colors.danger },
+  });

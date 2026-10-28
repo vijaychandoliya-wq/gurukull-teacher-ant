@@ -1,8 +1,22 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet} from 'react-native';
-import {Button, Flex, Input, Switch, Text, Toast, View, WhiteSpace} from '@ant-design/react-native';
-import {AnyRecord, getExamMarks, getExamStudents, saveExamMarks} from '../api';
-import {friendlyError, useAsyncData} from '../hooks';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
+import {
+  Button,
+  Flex,
+  Input,
+  Switch,
+  Text,
+  Toast,
+  View,
+  WhiteSpace,
+} from '@ant-design/react-native';
+import {
+  AnyRecord,
+  getExamMarks,
+  getExamStudents,
+  saveExamMarks,
+} from '../api';
+import { friendlyError, useAsyncData } from '../hooks';
 import {
   AntIcon,
   Card,
@@ -13,8 +27,14 @@ import {
   StatCard,
   StatusTag,
 } from '../components/ui';
-import {ScreenParams} from '../navigation';
-import {colors, font, spacing} from '../theme';
+import { ScreenParams } from '../navigation';
+import {
+  font,
+  spacing,
+  useThemeColors,
+  useThemedStyles,
+  type AppColors,
+} from '../theme';
 
 /**
  * Mark entry and read-only mark review for one exam schedule.
@@ -22,7 +42,10 @@ import {colors, font, spacing} from '../theme';
  * `mode: 'edit'` loads the class roll pre-filled with anything already saved —
  * submitting upserts, so the screen can be reopened to correct a score.
  */
-export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
+export default function ExamMarksScreen({ params }: { params?: ScreenParams }) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+
   const scheduleId = params?.scheduleId;
   const mode = params?.mode === 'view' ? 'view' : 'edit';
 
@@ -30,19 +53,31 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
     if (!scheduleId) {
       return [];
     }
-    return mode === 'view' ? getExamMarks(scheduleId) : getExamStudents(scheduleId);
+    return mode === 'view'
+      ? getExamMarks(scheduleId)
+      : getExamStudents(scheduleId);
   }, [scheduleId, mode]);
 
-  const {data, setData, loading, refreshing, error, setError, refresh, clearError} = useAsyncData<AnyRecord[]>(
-    loader,
-    [],
-  );
+  const {
+    data,
+    setData,
+    loading,
+    refreshing,
+    error,
+    setError,
+    refresh,
+    clearError,
+  } = useAsyncData<AnyRecord[]>(loader, []);
   const [saving, setSaving] = useState(false);
 
   if (!scheduleId) {
     return (
       <Screen>
-        <EmptyBlock title="No exam selected" message="Open a paper from the Exams screen." icon="solution" />
+        <EmptyBlock
+          title="No exam selected"
+          message="Open a paper from the Exams screen."
+          icon="solution"
+        />
       </Screen>
     );
   }
@@ -52,18 +87,37 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
   }
 
   if (mode === 'view') {
-    const passed = data.filter(mark => String(mark.mark_status).toLowerCase() === 'pass').length;
-    const absent = data.filter(mark => String(mark.mark_status).toLowerCase() === 'absent').length;
+    const passed = data.filter(
+      mark => String(mark.mark_status).toLowerCase() === 'pass',
+    ).length;
+    const absent = data.filter(
+      mark => String(mark.mark_status).toLowerCase() === 'absent',
+    ).length;
 
     return (
-      <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
+      <Screen
+        refreshing={refreshing}
+        onRefresh={refresh}
+        error={error}
+        onDismissError={clearError}
+      >
         <PageTitle title="Recorded marks" subtitle={params?.title} />
         {data.length ? (
           <>
             <Flex justify="between">
               <StatCard icon="team" value={data.length} label="Students" />
-              <StatCard icon="check-circle" value={passed} label="Passed" color={colors.success} />
-              <StatCard icon="close-circle" value={absent} label="Absent" color={colors.danger} />
+              <StatCard
+                icon="check-circle"
+                value={passed}
+                label="Passed"
+                color={colors.success}
+              />
+              <StatCard
+                icon="close-circle"
+                value={absent}
+                label="Absent"
+                color={colors.danger}
+              />
             </Flex>
             <WhiteSpace size="xl" />
             <Card>
@@ -89,7 +143,11 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
             </Card>
           </>
         ) : (
-          <EmptyBlock title="No marks yet" message="Nothing has been recorded for this paper." icon="edit" />
+          <EmptyBlock
+            title="No marks yet"
+            message="Nothing has been recorded for this paper."
+            icon="edit"
+          />
         )}
       </Screen>
     );
@@ -97,12 +155,18 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
 
   const update = (userId: string | number, patch: Partial<AnyRecord>) => {
     setData(current =>
-      current.map(student => (String(student.user_id) === String(userId) ? {...student, ...patch} : student)),
+      current.map(student =>
+        String(student.user_id) === String(userId)
+          ? { ...student, ...patch }
+          : student,
+      ),
     );
   };
 
-  const entered = data.filter(student => student.status === 'absent' || String(student.marks || '').trim() !== '')
-    .length;
+  const entered = data.filter(
+    student =>
+      student.status === 'absent' || String(student.marks || '').trim() !== '',
+  ).length;
 
   const save = async () => {
     if (!entered) {
@@ -129,14 +193,24 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
   };
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
       <PageTitle title="Enter marks" subtitle={params?.title} />
 
       {data.length ? (
         <>
           <Flex justify="between">
             <StatCard icon="team" value={data.length} label="Students" />
-            <StatCard icon="edit" value={entered} label="Entered" color={colors.cyan} />
+            <StatCard
+              icon="edit"
+              value={entered}
+              label="Entered"
+              color={colors.cyan}
+            />
             <StatCard
               icon="close-circle"
               value={data.filter(student => student.status === 'absent').length}
@@ -147,7 +221,10 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
           <WhiteSpace size="xl" />
 
           <Card>
-            <Card.Header title={data[0]?.class || 'Class'} thumb={<AntIcon name="edit" />} />
+            <Card.Header
+              title={data[0]?.class || 'Class'}
+              thumb={<AntIcon name="edit" />}
+            />
             <Card.Body>
               {data.map(student => {
                 const absent = student.status === 'absent';
@@ -155,15 +232,23 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
                   <View key={student.user_id} style={styles.row}>
                     <Flex justify="between" align="center">
                       <View style={styles.info}>
-                        <Text style={[styles.name, absent && styles.absentName]}>{student.name}</Text>
-                        <Text style={styles.meta}>{absent ? 'Marked absent' : 'Present'}</Text>
+                        <Text
+                          style={[styles.name, absent && styles.absentName]}
+                        >
+                          {student.name}
+                        </Text>
+                        <Text style={styles.meta}>
+                          {absent ? 'Marked absent' : 'Present'}
+                        </Text>
                       </View>
                       <Flex align="center">
                         {!absent ? (
                           <View style={styles.markInput}>
                             <Input
                               value={String(student.marks ?? '')}
-                              onChangeText={value => update(student.user_id, {marks: value})}
+                              onChangeText={value =>
+                                update(student.user_id, { marks: value })
+                              }
                               keyboardType="numeric"
                               placeholder="—"
                               inputStyle={styles.markInputText}
@@ -190,32 +275,46 @@ export default function ExamMarksScreen({params}: {params?: ScreenParams}) {
           </Card>
 
           <WhiteSpace size="xl" />
-          <Button type="primary" size="large" loading={saving} disabled={saving} onPress={save}>
+          <Button
+            type="primary"
+            size="large"
+            loading={saving}
+            disabled={saving}
+            onPress={save}
+          >
             Save marks
           </Button>
           <WhiteSpace size="sm" />
-          <Text style={styles.hint}>Toggle a student to mark them absent. Saving again corrects earlier marks.</Text>
+          <Text style={styles.hint}>
+            Toggle a student to mark them absent. Saving again corrects earlier
+            marks.
+          </Text>
         </>
       ) : (
-        <EmptyBlock title="No students" message="This class has no enrolled students." icon="team" />
+        <EmptyBlock
+          title="No students"
+          message="This class has no enrolled students."
+          icon="team"
+        />
       )}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    paddingVertical: spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  info: {flex: 1},
-  name: {fontSize: font.l, color: colors.text, fontWeight: '500'},
-  absentName: {color: colors.danger},
-  meta: {fontSize: font.ms, color: colors.weak, marginTop: 2},
-  score: {fontSize: font.xl, fontWeight: '700', color: colors.text},
-  tagGap: {width: spacing.s},
-  markInput: {width: 68},
-  markInputText: {textAlign: 'center'},
-  hint: {fontSize: font.ms, color: colors.weak, textAlign: 'center'},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    row: {
+      paddingVertical: spacing.m,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    info: { flex: 1 },
+    name: { fontSize: font.l, color: colors.text, fontWeight: '500' },
+    absentName: { color: colors.danger },
+    meta: { fontSize: font.ms, color: colors.weak, marginTop: 2 },
+    score: { fontSize: font.xl, fontWeight: '700', color: colors.text },
+    tagGap: { width: spacing.s },
+    markInput: { width: 68 },
+    markInputText: { textAlign: 'center' },
+    hint: { fontSize: font.ms, color: colors.weak, textAlign: 'center' },
+  });

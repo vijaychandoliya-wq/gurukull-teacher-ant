@@ -4,7 +4,7 @@
  * Every screen composes these rather than restyling Ant primitives inline, so
  * headings, empty states and status chips stay identical across the app.
  */
-import React, {ComponentProps, ReactNode} from 'react';
+import React, { ComponentProps, ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   RefreshControl,
@@ -24,8 +24,19 @@ import {
   View,
   WhiteSpace,
 } from '@ant-design/react-native';
-import {IconOutline, OutlineGlyphMapType} from '@ant-design/icons-react-native';
-import {colors, font, radius, spacing, statusColor} from '../theme';
+import {
+  IconOutline,
+  OutlineGlyphMapType,
+} from '@ant-design/icons-react-native';
+import {
+  font,
+  radius,
+  spacing,
+  statusColor,
+  useThemeColors,
+  useThemedStyles,
+  type AppColors,
+} from '../theme';
 
 /**
  * Icon-and-label content for an Ant `Button`.
@@ -44,8 +55,15 @@ export function ButtonLabel({
   tone?: 'default' | 'onPrimary' | 'danger';
   children: ReactNode;
 }) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+
   const tint =
-    tone === 'onPrimary' ? '#fff' : tone === 'danger' ? colors.danger : colors.primary;
+    tone === 'onPrimary'
+      ? '#fff'
+      : tone === 'danger'
+      ? colors.danger
+      : colors.primary;
   const textStyle =
     tone === 'onPrimary'
       ? styles.buttonLabelOnPrimary
@@ -63,17 +81,23 @@ export function ButtonLabel({
 
 export function AntIcon({
   name,
-  color = colors.primary,
+  color,
   size = 22,
 }: {
   name: OutlineGlyphMapType;
   color?: string;
   size?: number;
 }) {
-  return <IconOutline name={name} color={color} size={size} />;
+  const colors = useThemeColors();
+
+  return (
+    <IconOutline name={name} color={color || colors.primary} size={size} />
+  );
 }
 
-export function LoadingBlock({text = 'Loading…'}: {text?: string}) {
+export function LoadingBlock({ text = 'Loading…' }: { text?: string }) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View style={styles.centeredBlock}>
       <ActivityIndicator size="large" text={text} />
@@ -90,10 +114,26 @@ export function EmptyBlock({
   message: string;
   icon?: OutlineGlyphMapType;
 }) {
-  return <Result img={<AntIcon name={icon} size={54} color="#91caff" />} title={title} message={message} />;
+  const colors = useThemeColors();
+
+  return (
+    <Result
+      img={<AntIcon name={icon} size={54} color={colors.primary} />}
+      title={title}
+      message={message}
+    />
+  );
 }
 
-export function PageTitle({title, subtitle}: {title: string; subtitle?: string}) {
+export function PageTitle({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle?: string;
+}) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View style={styles.pageHeading}>
       <Text style={styles.pageTitle}>{title}</Text>
@@ -102,7 +142,15 @@ export function PageTitle({title, subtitle}: {title: string; subtitle?: string})
   );
 }
 
-export function SectionTitle({title, extra}: {title: string; extra?: ReactNode}) {
+export function SectionTitle({
+  title,
+  extra,
+}: {
+  title: string;
+  extra?: ReactNode;
+}) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <Flex justify="between" align="center" style={styles.sectionRow}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -112,7 +160,15 @@ export function SectionTitle({title, extra}: {title: string; extra?: ReactNode})
 }
 
 /** Dismissible error banner. Renders nothing when there is no error. */
-export function ErrorBar({message, onClose}: {message: string; onClose: () => void}) {
+export function ErrorBar({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) {
+  const colors = useThemeColors();
+
   if (!message) {
     return null;
   }
@@ -120,19 +176,23 @@ export function ErrorBar({message, onClose}: {message: string; onClose: () => vo
     <NoticeBar
       mode="closable"
       onClose={onClose}
-      icon={<AntIcon name="warning" color={colors.danger} size={18} />}>
+      icon={<AntIcon name="warning" color={colors.danger} size={18} />}
+    >
       {message}
     </NoticeBar>
   );
 }
 
 /** Status chip whose colour is derived from the API's own status wording. */
-export function StatusTag({status}: {status?: string | null}) {
+export function StatusTag({ status }: { status?: string | null }) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+
   const label = String(status || 'Pending');
-  const color = statusColor(label);
+  const color = statusColor(label, colors);
   return (
-    <Tag small style={[styles.statusTag, {borderColor: color}]}>
-      <Text style={{color, fontSize: font.s}}>{label}</Text>
+    <Tag small style={[styles.statusTag, { borderColor: color }]}>
+      <Text style={{ color, fontSize: font.s }}>{label}</Text>
     </Tag>
   );
 }
@@ -143,7 +203,13 @@ export function StatusTag({status}: {status?: string | null}) {
  * The library's card body only pads vertically, and the header only indents
  * from the left, so titles and body text sit on the card edge.
  */
-export function Card({children, style, ...rest}: ComponentProps<typeof AntCard>) {
+export function Card({
+  children,
+  style,
+  ...rest
+}: ComponentProps<typeof AntCard>) {
+  const styles = useThemedStyles(createStyles);
+
   const hasHeader = React.Children.toArray(children).some(
     child => React.isValidElement(child) && child.type === AntCard.Header,
   );
@@ -153,23 +219,38 @@ export function Card({children, style, ...rest}: ComponentProps<typeof AntCard>)
         if (!React.isValidElement(child)) {
           return child;
         }
-        const extra = (child.props as {style?: object}).style;
+        const extra = (child.props as { style?: object }).style;
         if (child.type === AntCard.Body) {
-          return React.cloneElement(child as React.ReactElement<{style?: object}>, {
-            style: [styles.cardBody, !hasHeader && styles.cardBodyPlain, extra],
-          });
+          return React.cloneElement(
+            child as React.ReactElement<{ style?: object }>,
+            {
+              style: [
+                styles.cardBody,
+                !hasHeader && styles.cardBodyPlain,
+                extra,
+              ],
+            },
+          );
         }
         if (child.type === AntCard.Header) {
-          return React.cloneElement(child as React.ReactElement<{style?: object}>, {
-            style: [styles.cardHeader, extra],
-          });
+          return React.cloneElement(
+            child as React.ReactElement<{ style?: object }>,
+            {
+              style: [styles.cardHeader, extra],
+            },
+          );
         }
         return child;
       })}
     </AntCard>
   );
 }
-type CardSlotProps = {style?: object; styles?: object; children?: ReactNode; [key: string]: any};
+type CardSlotProps = {
+  style?: object;
+  styles?: object;
+  children?: ReactNode;
+  [key: string]: any;
+};
 Card.Header = AntCard.Header as React.ComponentType<CardSlotProps>;
 Card.Body = AntCard.Body as React.ComponentType<CardSlotProps>;
 Card.Footer = AntCard.Footer as React.ComponentType<CardSlotProps>;
@@ -179,17 +260,20 @@ export function StatCard({
   icon,
   value,
   label,
-  color = colors.primary,
+  color,
 }: {
   icon: OutlineGlyphMapType;
   value: number | string;
   label: string;
   color?: string;
 }) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+
   return (
     <Card style={styles.statCard}>
       <Card.Body style={styles.statBody}>
-        <AntIcon name={icon} color={color} />
+        <AntIcon name={icon} color={color || colors.primary} />
         <Text style={styles.statNumber}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
       </Card.Body>
@@ -214,12 +298,18 @@ export function Screen({
   error?: string;
   onDismissError?: () => void;
 }) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+
   return (
     // Targeting SDK 35+ forces edge-to-edge, which stops the manifest's
     // `adjustResize` from shrinking the window when the keyboard opens — so
     // without this the keyboard sits on top of whatever field has focus.
     // `padding` is the behaviour that works once the window no longer resizes.
-    <KeyboardAvoidingView style={styles.flex} behavior="padding">
+    <KeyboardAvoidingView
+      style={[styles.flex, styles.screen]}
+      behavior="padding"
+    >
       <ScrollView
         contentContainerStyle={styles.pageContent}
         keyboardShouldPersistTaps="handled"
@@ -233,7 +323,8 @@ export function Screen({
               tintColor={colors.primary}
             />
           ) : undefined
-        }>
+        }
+      >
         {error && onDismissError ? (
           <>
             <ErrorBar message={error} onClose={onDismissError} />
@@ -241,7 +332,6 @@ export function Screen({
           </>
         ) : null}
         {children}
-        <WhiteSpace size="xl" />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -268,6 +358,8 @@ export function RecordCard({
   footer?: ReactNode;
   onPress?: () => void;
 }) {
+  const styles = useThemedStyles(createStyles);
+
   const lines = (meta || []).filter(Boolean);
   const card = (
     <Card style={styles.recordCard}>
@@ -302,15 +394,22 @@ export function RecordCard({
 }
 
 /** Label/value row for read-only detail lists. */
-export function DetailRows({rows}: {rows: [string, any][]}) {
-  const visible = rows.filter(([, value]) => value !== null && value !== undefined && value !== '');
+export function DetailRows({ rows }: { rows: [string, any][] }) {
+  const styles = useThemedStyles(createStyles);
+
+  const visible = rows.filter(
+    ([, value]) => value !== null && value !== undefined && value !== '',
+  );
   if (!visible.length) {
     return null;
   }
   return (
     <List>
       {visible.map(([label, value]) => (
-        <List.Item key={label} extra={<Text style={styles.detailValue}>{String(value)}</Text>}>
+        <List.Item
+          key={label}
+          extra={<Text style={styles.detailValue}>{String(value)}</Text>}
+        >
           <Text style={styles.detailLabel}>{label}</Text>
         </List.Item>
       ))}
@@ -318,45 +417,95 @@ export function DetailRows({rows}: {rows: [string, any][]}) {
   );
 }
 
-export const styles = StyleSheet.create({
-  flex: {flex: 1},
-  buttonLabel: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center'},
-  buttonLabelDefault: {fontSize: font.l, color: colors.primary, marginLeft: 6},
-  buttonLabelOnPrimary: {fontSize: font.l, color: '#fff', marginLeft: 6},
-  buttonLabelDanger: {fontSize: font.l, color: colors.danger, marginLeft: 6},
-  centeredBlock: {flex: 1, minHeight: 300, alignItems: 'center', justifyContent: 'center'},
-  pageContent: {paddingHorizontal: spacing.l, paddingTop: spacing.l, paddingBottom: 40},
-  cardShell: {borderRadius: radius.l},
-  cardHeader: {
-    marginLeft: 0,
-    paddingLeft: spacing.l,
-    paddingRight: spacing.l,
-    paddingVertical: spacing.m,
-  },
-  cardBody: {paddingHorizontal: spacing.l, paddingVertical: spacing.l},
-  cardBodyPlain: {borderTopWidth: 0},
-  statBody: {paddingHorizontal: spacing.m, paddingVertical: spacing.m},
-  pageHeading: {marginBottom: spacing.l + 2},
-  pageTitle: {fontSize: 25, lineHeight: 32, fontWeight: '700', color: colors.text},
-  pageSubtitle: {fontSize: font.m, lineHeight: 21, color: colors.textSecondary, marginTop: 3},
-  sectionRow: {marginBottom: spacing.m},
-  sectionTitle: {fontSize: font.xxl, fontWeight: '700', color: colors.text},
-  statusTag: {borderRadius: radius.s},
-  statCard: {width: '31%', borderRadius: radius.l},
-  statNumber: {fontSize: 23, fontWeight: '700', color: colors.text, marginTop: 7},
-  statLabel: {fontSize: font.s, color: colors.textSecondary, marginTop: 2},
-  recordCard: {marginBottom: spacing.m, borderRadius: radius.l},
-  recordTitle: {fontSize: font.l, fontWeight: '600', color: colors.text},
-  recordMeta: {fontSize: font.main, lineHeight: 20, color: colors.textSecondary},
-  recordBody: {
-    fontSize: font.main,
-    lineHeight: 20,
-    color: colors.text,
-    marginTop: spacing.s,
-    paddingTop: spacing.s,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  detailLabel: {fontSize: font.m, color: colors.textSecondary},
-  detailValue: {fontSize: font.m, color: colors.text},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    buttonLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    buttonLabelDefault: {
+      fontSize: font.l,
+      color: colors.primary,
+      marginLeft: 6,
+    },
+    buttonLabelOnPrimary: { fontSize: font.l, color: '#fff', marginLeft: 6 },
+    buttonLabelDanger: {
+      fontSize: font.l,
+      color: colors.danger,
+      marginLeft: 6,
+    },
+    centeredBlock: {
+      flex: 1,
+      minHeight: 260,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.background,
+      padding: spacing.page,
+    },
+    screen: { backgroundColor: colors.background },
+    pageContent: {
+      flexGrow: 1,
+      paddingHorizontal: spacing.page,
+      paddingTop: spacing.page,
+      paddingBottom: spacing.xxl,
+    },
+    cardShell: {
+      borderRadius: radius.l,
+      paddingBottom: 0,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    cardHeader: {
+      marginLeft: 0,
+      paddingLeft: spacing.l,
+      paddingRight: spacing.l,
+      paddingVertical: spacing.m,
+    },
+    cardBody: { paddingHorizontal: spacing.l, paddingVertical: spacing.l },
+    cardBodyPlain: { borderTopWidth: 0 },
+    statBody: { paddingHorizontal: spacing.m, paddingVertical: spacing.m },
+    pageHeading: { marginBottom: spacing.l + 2 },
+    pageTitle: {
+      fontSize: 25,
+      lineHeight: 32,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    pageSubtitle: {
+      fontSize: font.m,
+      lineHeight: 21,
+      color: colors.textSecondary,
+      marginTop: 3,
+    },
+    sectionRow: { marginBottom: spacing.m },
+    sectionTitle: { fontSize: font.xxl, fontWeight: '700', color: colors.text },
+    statusTag: { borderRadius: radius.s },
+    statCard: { width: '31%', borderRadius: radius.l },
+    statNumber: {
+      fontSize: 23,
+      fontWeight: '700',
+      color: colors.text,
+      marginTop: 7,
+    },
+    statLabel: { fontSize: font.s, color: colors.textSecondary, marginTop: 2 },
+    recordCard: { marginBottom: spacing.m, borderRadius: radius.l },
+    recordTitle: { fontSize: font.l, fontWeight: '600', color: colors.text },
+    recordMeta: {
+      fontSize: font.main,
+      lineHeight: 20,
+      color: colors.textSecondary,
+    },
+    recordBody: {
+      fontSize: font.main,
+      lineHeight: 20,
+      color: colors.text,
+      marginTop: spacing.s,
+      paddingTop: spacing.s,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    detailLabel: { fontSize: font.m, color: colors.textSecondary },
+    detailValue: { fontSize: font.m, color: colors.text },
+  });

@@ -1,10 +1,23 @@
-import React, {useCallback} from 'react';
-import {StyleSheet} from 'react-native';
-import {Badge, Flex, Text, View} from '@ant-design/react-native';
-import {AnyRecord, getNotifications} from '../api';
-import {useAsyncData} from '../hooks';
-import {AntIcon, Card, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
-import {colors, font, radius, spacing} from '../theme';
+import React, { useCallback } from 'react';
+import { StyleSheet } from 'react-native';
+import { Badge, Flex, Text, View } from '@ant-design/react-native';
+import { AnyRecord, getNotifications } from '../api';
+import { useAsyncData } from '../hooks';
+import {
+  AntIcon,
+  Card,
+  EmptyBlock,
+  LoadingBlock,
+  PageTitle,
+  Screen,
+} from '../components/ui';
+import {
+  font,
+  radius,
+  spacing,
+  useThemedStyles,
+  type AppColors,
+} from '../theme';
 
 /** Picks an icon from the notification's `type` string. */
 function iconFor(type?: string) {
@@ -24,7 +37,13 @@ function iconFor(type?: string) {
   return 'bell' as const;
 }
 
-export default function NotificationsScreen({profile}: {profile: AnyRecord | null}) {
+export default function NotificationsScreen({
+  profile,
+}: {
+  profile: AnyRecord | null;
+}) {
+  const styles = useThemedStyles(createStyles);
+
   const teacherId = profile?.id;
 
   const loader = useCallback(async () => {
@@ -34,7 +53,8 @@ export default function NotificationsScreen({profile}: {profile: AnyRecord | nul
     return getNotifications(teacherId);
   }, [teacherId]);
 
-  const {data, loading, refreshing, error, refresh, clearError} = useAsyncData<AnyRecord[]>(loader, []);
+  const { data, loading, refreshing, error, refresh, clearError } =
+    useAsyncData<AnyRecord[]>(loader, []);
 
   if (loading) {
     return <LoadingBlock />;
@@ -43,8 +63,16 @@ export default function NotificationsScreen({profile}: {profile: AnyRecord | nul
   const unread = data.filter(item => !item.read_at).length;
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
-      <PageTitle title="Notifications" subtitle="Everything the school has pushed to you." />
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
+      <PageTitle
+        title="Notifications"
+        subtitle="Everything the school has pushed to you."
+      />
 
       {data.length ? (
         <Card>
@@ -55,14 +83,21 @@ export default function NotificationsScreen({profile}: {profile: AnyRecord | nul
           />
           <Card.Body>
             {data.map((item, index) => (
-              <View key={item.id || index} style={[styles.row, !item.read_at && styles.unreadRow]}>
+              <View
+                key={item.id || index}
+                style={[styles.row, !item.read_at && styles.unreadRow]}
+              >
                 <Flex align="start">
                   <View style={styles.iconWrap}>
                     <AntIcon name={iconFor(item.type)} size={18} />
                   </View>
                   <View style={styles.body}>
-                    <Text style={styles.message}>{item.data_message || item.type || 'Notification'}</Text>
-                    <Text style={styles.time}>{item.created_at || item.datetime}</Text>
+                    <Text style={styles.message}>
+                      {item.data_message || item.type || 'Notification'}
+                    </Text>
+                    <Text style={styles.time}>
+                      {item.created_at || item.datetime}
+                    </Text>
                   </View>
                   {!item.read_at ? <View style={styles.dot} /> : null}
                 </Flex>
@@ -71,30 +106,45 @@ export default function NotificationsScreen({profile}: {profile: AnyRecord | nul
           </Card.Body>
         </Card>
       ) : (
-        <EmptyBlock title="Nothing yet" message="School notifications will show up here." icon="bell" />
+        <EmptyBlock
+          title="Nothing yet"
+          message="School notifications will show up here."
+          icon="bell"
+        />
       )}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    paddingVertical: spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  unreadRow: {backgroundColor: colors.wathet, marginHorizontal: -spacing.l, paddingHorizontal: spacing.l},
-  iconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.m,
-    backgroundColor: colors.wathet,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.m,
-  },
-  body: {flex: 1},
-  message: {fontSize: font.m, lineHeight: 20, color: colors.text},
-  time: {fontSize: font.ms, color: colors.weak, marginTop: 3},
-  dot: {width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary, marginTop: 6},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    row: {
+      paddingVertical: spacing.m,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    unreadRow: {
+      backgroundColor: colors.wathet,
+      marginHorizontal: -spacing.l,
+      paddingHorizontal: spacing.l,
+    },
+    iconWrap: {
+      width: 34,
+      height: 34,
+      borderRadius: radius.m,
+      backgroundColor: colors.wathet,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.m,
+    },
+    body: { flex: 1 },
+    message: { fontSize: font.m, lineHeight: 20, color: colors.text },
+    time: { fontSize: font.ms, color: colors.weak, marginTop: 3 },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.primary,
+      marginTop: 6,
+    },
+  });

@@ -1,26 +1,42 @@
-import React, {useEffect, useState} from 'react';
-import {Image, KeyboardAvoidingView, ScrollView, StatusBar, StyleSheet} from 'react-native';
-import {Button, Form, Input, Text, View, WhiteSpace} from '@ant-design/react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {getSchoolCode, login, setSchoolCode} from '../api';
-import {friendlyError} from '../hooks';
-import {AntIcon, Card, ErrorBar} from '../components/ui';
-import {colors, font, radius, spacing} from '../theme';
-import {AVAILABLE_MOBILE_LOCALES,useLanguage} from '../i18n';
+import React, { useEffect, useState } from 'react';
+import {
+  Image,
+  KeyboardAvoidingView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { Button, Input, Text, View } from '@ant-design/react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getSchoolCode, login, setSchoolCode } from '../api';
+import { friendlyError } from '../hooks';
+import { AntIcon, Card, ErrorBar } from '../components/ui';
+import { ThemePicker } from '../components/ThemePicker';
+import {
+  font,
+  radius,
+  spacing,
+  useAppTheme,
+  useThemedStyles,
+  type AppColors,
+} from '../theme';
+import { AVAILABLE_MOBILE_LOCALES, useLanguage } from '../i18n';
 
-export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
-  const {locale,setLocale,t}=useLanguage();
-  // The same binary is used by every configured Gurukull school.
+export default function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
+  const { colors, isDark } = useAppTheme();
+  const styles = useThemedStyles(createStyles);
+  const { locale, setLocale, t } = useLanguage();
   const [schoolCode, setSchool] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   useEffect(() => {
-    getSchoolCode().then(setSchool);
+    getSchoolCode()
+      .then(setSchool)
+      .catch(() => {});
   }, []);
-
   const submit = async () => {
     if (!schoolCode.trim() || !identifier.trim() || !password) {
       setError('Enter your school code, teacher mobile/email and password.');
@@ -38,98 +54,222 @@ export default function LoginScreen({onSuccess}: {onSuccess: () => void}) {
       setLoading(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      {/* `padding` on Android too: the app targets SDK 36, where edge-to-edge
-          is mandatory and the manifest's `adjustResize` no longer shrinks the
-          window, so leaving behavior undefined lets the keyboard bury the
-          password field and the sign-in button. */}
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Image
-            source={require('../assets/dronacharya-logo.png')}
-            style={styles.brandMark}
-            resizeMode="cover"
-          />
-          <View style={styles.languageRow}>{AVAILABLE_MOBILE_LOCALES.map(option=><Button key={option.tag} type={locale===option.tag?'primary':'ghost'} size="small" style={styles.languageButton} onPress={()=>void setLocale(option.tag)}>{option.label}</Button>)}</View>
-            <Text style={styles.title}>Dronacharya</Text>
-          <Text style={styles.subtitle}>Your classes, timetable and leave requests in one place.</Text>
-          <WhiteSpace size="xl" />
-          <Card style={styles.card}>
-            <Card.Header title={t('teacherSignIn')} thumb={<AntIcon name="safety-certificate" />} />
-            <Card.Body>
-              <ErrorBar message={error} onClose={() => setError('')} />
-              <WhiteSpace size="lg" />
-              <Form layout="vertical">
-                <Form.Item label={t('schoolCode')} required>
-                  <Input
-                    value={schoolCode}
-                    onChangeText={setSchool}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                    placeholder="e.g. 117 or RAJESH"
-                    prefix={<AntIcon name="bank" color={colors.weak} size={19} />}
-                  />
-                </Form.Item>
-                <Form.Item label={t('identifier')} required>
-                  <Input
-                    value={identifier}
-                    onChangeText={setIdentifier}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="phone-pad"
-                    placeholder="8056745614 or teacher@gurukull.in"
-                    prefix={<AntIcon name="mail" color={colors.weak} size={19} />}
-                    allowClear
-                  />
-                </Form.Item>
-                <Form.Item label={t('password')} required>
-                  <Input
-                    value={password}
-                    onChangeText={setPassword}
-                    type="password"
-                    placeholder="Enter the password generated by admin"
-                    prefix={<AntIcon name="lock" color={colors.weak} size={19} />}
-                  />
-                </Form.Item>
-              </Form>
-              <WhiteSpace size="lg" />
-              <Button type="primary" size="large" loading={loading} disabled={loading} onPress={submit}>
-                {t('signIn')}
-              </Button>
-            </Card.Body>
-          </Card>
-          <Text style={styles.secure}>
-            <AntIcon name="safety" color={colors.success} size={15} /> Secure connection to the Gurukull school platform
-          </Text>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={styles.column}>
+            <View style={styles.toolbar}>
+              <ThemePicker compact />
+            </View>
+            <View style={styles.brand}>
+              <Image
+                source={require('../assets/dronacharya-logo.png')}
+                style={styles.brandMark}
+                resizeMode="cover"
+              />
+              <Text style={styles.title}>Dronacharya</Text>
+              <Text style={styles.subtitle}>
+                Your teaching day, in one place.
+              </Text>
+            </View>
+            <View style={styles.languageRow} accessibilityLabel="Language">
+              {AVAILABLE_MOBILE_LOCALES.map(option => (
+                <TouchableOpacity
+                  key={option.tag}
+                  accessibilityRole="radio"
+                  accessibilityLabel={option.label + ' language'}
+                  accessibilityState={{ selected: locale === option.tag }}
+                  onPress={() => void setLocale(option.tag)}
+                  style={[
+                    styles.languageButton,
+                    locale === option.tag && styles.languageSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.languageLabel,
+                      locale === option.tag && { color: colors.primary },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Card>
+              <Card.Header
+                title={t('teacherSignIn')}
+                thumb={<AntIcon name="safety-certificate" />}
+              />
+              <Card.Body>
+                <ErrorBar message={error} onClose={() => setError('')} />
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t('schoolCode')}</Text>
+                  <View style={styles.input}>
+                    <Input
+                      accessibilityLabel={t('schoolCode')}
+                      value={schoolCode}
+                      onChangeText={setSchool}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      placeholder="Enter school code"
+                      prefix={
+                        <AntIcon name="bank" color={colors.weak} size={19} />
+                      }
+                    />
+                  </View>
+                </View>
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t('identifier')}</Text>
+                  <View style={styles.input}>
+                    <Input
+                      accessibilityLabel={t('identifier')}
+                      value={identifier}
+                      onChangeText={setIdentifier}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      placeholder="Registered mobile or email"
+                      prefix={
+                        <AntIcon name="mail" color={colors.weak} size={19} />
+                      }
+                    />
+                  </View>
+                </View>
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t('password')}</Text>
+                  <View style={styles.input}>
+                    <Input
+                      accessibilityLabel={t('password')}
+                      value={password}
+                      onChangeText={setPassword}
+                      type="password"
+                      placeholder="Enter your password"
+                      prefix={
+                        <AntIcon name="lock" color={colors.weak} size={19} />
+                      }
+                    />
+                  </View>
+                </View>
+                <Button
+                  type="primary"
+                  size="large"
+                  loading={loading}
+                  disabled={loading}
+                  onPress={submit}
+                >
+                  {t('signIn')}
+                </Button>
+              </Card.Body>
+            </Card>
+            <View style={styles.secure}>
+              <AntIcon name="safety" color={colors.success} size={16} />
+              <Text style={styles.secureText}>
+                Secure access for your school
+              </Text>
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {flex: 1},
-  safe: {flex: 1, backgroundColor: colors.background},
-  content: {flexGrow: 1, justifyContent: 'center', padding: spacing.xl},
-  languageRow: {flexDirection:'row', justifyContent:'flex-end', gap:6, marginBottom:12},
-  languageButton:{flex:1},
-  brandMark: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
-    backgroundColor: '#CD9D56',
-    alignSelf: 'center',
-    overflow: 'hidden',
-    shadowColor: '#CD9D56',
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  title: {fontSize: 28, lineHeight: 36, fontWeight: '700', color: colors.text, textAlign: 'center', marginTop: 18},
-  subtitle: {fontSize: font.l, lineHeight: 22, color: colors.textSecondary, textAlign: 'center', marginTop: 6},
-  card: {borderRadius: radius.l, overflow: 'hidden'},
-  secure: {fontSize: font.ms, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl - 4},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    safe: { flex: 1, backgroundColor: colors.background },
+    content: {
+      flexGrow: 1,
+      paddingHorizontal: spacing.page,
+      paddingTop: spacing.m,
+      paddingBottom: spacing.xl,
+    },
+    column: { width: '100%', maxWidth: 480, alignSelf: 'center' },
+    toolbar: { alignItems: 'flex-end', marginBottom: spacing.l },
+    brand: { alignItems: 'center', paddingVertical: spacing.m },
+    brandMark: {
+      width: 72,
+      height: 72,
+      borderRadius: 20,
+      backgroundColor: colors.brandGold,
+    },
+    title: {
+      fontSize: 28,
+      lineHeight: 36,
+      fontWeight: '700',
+      color: colors.text,
+      marginTop: spacing.l,
+    },
+    subtitle: {
+      fontSize: font.l,
+      lineHeight: 24,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: spacing.s,
+    },
+    languageRow: {
+      flexDirection: 'row',
+      gap: spacing.s,
+      marginTop: spacing.m,
+      marginBottom: spacing.xl,
+    },
+    languageButton: {
+      flex: 1,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.s,
+      borderRadius: radius.m,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    languageSelected: {
+      backgroundColor: colors.wathet,
+      borderColor: colors.primary,
+    },
+    languageLabel: {
+      fontSize: font.m,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    field: { marginBottom: spacing.l },
+    label: {
+      fontSize: font.m,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: spacing.s,
+      lineHeight: 20,
+    },
+    input: {
+      minHeight: 52,
+      paddingHorizontal: spacing.m,
+      paddingVertical: spacing.xs,
+      justifyContent: 'center',
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.m,
+    },
+    secure: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.s,
+      marginTop: spacing.xl,
+    },
+    secureText: {
+      fontSize: font.ms,
+      color: colors.textSecondary,
+      flexShrink: 1,
+      lineHeight: 20,
+    },
+  });

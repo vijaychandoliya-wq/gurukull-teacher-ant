@@ -1,8 +1,16 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet} from 'react-native';
-import {Button, Flex, Tabs, Text, Toast, View, WhiteSpace} from '@ant-design/react-native';
-import {AnyRecord, completeTask, getTasks, ownAssigneeId} from '../api';
-import {friendlyError, useAsyncData} from '../hooks';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
+import {
+  Button,
+  Flex,
+  Tabs,
+  Text,
+  Toast,
+  View,
+  WhiteSpace,
+} from '@ant-design/react-native';
+import { AnyRecord, completeTask, getTasks, ownAssigneeId } from '../api';
+import { friendlyError, useAsyncData } from '../hooks';
 import {
   EmptyBlock,
   LoadingBlock,
@@ -12,17 +20,29 @@ import {
   SectionTitle,
   ButtonLabel,
 } from '../components/ui';
-import {ScreenKey} from '../navigation';
-import {colors, font} from '../theme';
+import { ScreenKey } from '../navigation';
+import {
+  font,
+  useThemeColors,
+  useThemedStyles,
+  type AppColors,
+} from '../theme';
 
-const TABS: {title: string; scope: 'mine' | 'assigned'; completed: boolean}[] = [
-  {title: 'My open', scope: 'mine', completed: false},
-  {title: 'My done', scope: 'mine', completed: true},
-  {title: 'Assigned', scope: 'assigned', completed: false},
+const TABS: {
+  title: string;
+  scope: 'mine' | 'assigned';
+  completed: boolean;
+}[] = [
+  { title: 'My open', scope: 'mine', completed: false },
+  { title: 'My done', scope: 'mine', completed: true },
+  { title: 'Assigned', scope: 'assigned', completed: false },
 ];
 
 /** Priority is a free-text field on the API; colour the common values. */
-function priorityColor(priority?: string) {
+function priorityColor(
+  priority: string | undefined,
+  colors: import('../theme').AppColors,
+) {
   const value = String(priority || '').toLowerCase();
   if (value === 'high' || value === 'urgent') {
     return colors.danger;
@@ -33,15 +53,31 @@ function priorityColor(priority?: string) {
   return colors.textSecondary;
 }
 
-export default function TasksScreen({navigate}: {navigate: (screen: ScreenKey) => void}) {
-  const [tab, setTab] = useState(0);
-  const {scope, completed} = TABS[tab];
+export default function TasksScreen({
+  navigate,
+}: {
+  navigate: (screen: ScreenKey) => void;
+}) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
 
-  const loader = useCallback(() => getTasks(scope, completed), [scope, completed]);
-  const {data, loading, refreshing, error, setError, reload, refresh, clearError} = useAsyncData<AnyRecord[]>(
-    loader,
-    [],
+  const [tab, setTab] = useState(0);
+  const { scope, completed } = TABS[tab];
+
+  const loader = useCallback(
+    () => getTasks(scope, completed),
+    [scope, completed],
   );
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    setError,
+    reload,
+    refresh,
+    clearError,
+  } = useAsyncData<AnyRecord[]>(loader, []);
 
   const markDone = async (task: AnyRecord) => {
     // The endpoint closes assignee rows, not tasks — find this teacher's own.
@@ -60,8 +96,16 @@ export default function TasksScreen({navigate}: {navigate: (screen: ScreenKey) =
   };
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
-      <PageTitle title="My tasks" subtitle="To-dos assigned to you and by you." />
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
+      <PageTitle
+        title="My tasks"
+        subtitle="To-dos assigned to you and by you."
+      />
 
       <Button type="primary" onPress={() => navigate('taskCompose')}>
         <ButtonLabel icon="plus" tone="onPrimary">
@@ -71,11 +115,12 @@ export default function TasksScreen({navigate}: {navigate: (screen: ScreenKey) =
       <WhiteSpace size="lg" />
 
       <Tabs
-        tabs={TABS.map(item => ({title: item.title, key: item.title}))}
+        tabs={TABS.map(item => ({ title: item.title, key: item.title }))}
         page={tab}
         onChange={(_item, index) => setTab(index)}
         swipeable={false}
-        noRenderContent>
+        noRenderContent
+      >
         <View />
       </Tabs>
       <WhiteSpace size="lg" />
@@ -84,7 +129,9 @@ export default function TasksScreen({navigate}: {navigate: (screen: ScreenKey) =
         <LoadingBlock />
       ) : data.length ? (
         <>
-          <SectionTitle title={`${data.length} ${data.length === 1 ? 'task' : 'tasks'}`} />
+          <SectionTitle
+            title={`${data.length} ${data.length === 1 ? 'task' : 'tasks'}`}
+          />
           {data.map((task, index) => (
             <RecordCard
               key={task.task_id || index}
@@ -94,7 +141,11 @@ export default function TasksScreen({navigate}: {navigate: (screen: ScreenKey) =
               meta={[
                 task.task_date ? `Due ${task.task_date}` : null,
                 task.standardLink ? `Class: ${task.standardLink}` : null,
-                task.total_count ? `${task.completion_count || 0} of ${task.total_count} assignees done` : null,
+                task.total_count
+                  ? `${task.completion_count || 0} of ${
+                      task.total_count
+                    } assignees done`
+                  : null,
                 task.reminder_date ? task.reminder : null,
               ]}
               body={task.to_do_list}
@@ -102,11 +153,23 @@ export default function TasksScreen({navigate}: {navigate: (screen: ScreenKey) =
                 <>
                   <WhiteSpace size="sm" />
                   <Flex justify="between" align="center">
-                    <Text style={[styles.priority, {color: priorityColor(task.priority)}]}>
-                      {task.priority ? String(task.priority).toUpperCase() : 'NORMAL'} PRIORITY
+                    <Text
+                      style={[
+                        styles.priority,
+                        { color: priorityColor(task.priority, colors) },
+                      ]}
+                    >
+                      {task.priority
+                        ? String(task.priority).toUpperCase()
+                        : 'NORMAL'}{' '}
+                      PRIORITY
                     </Text>
                     {!task.task_completed ? (
-                      <Button size="small" type="primary" onPress={() => markDone(task)}>
+                      <Button
+                        size="small"
+                        type="primary"
+                        onPress={() => markDone(task)}
+                      >
                         Mark done
                       </Button>
                     ) : null}
@@ -117,12 +180,17 @@ export default function TasksScreen({navigate}: {navigate: (screen: ScreenKey) =
           ))}
         </>
       ) : (
-        <EmptyBlock title="Nothing to do" message="Tasks assigned to you will appear here." icon="check-circle" />
+        <EmptyBlock
+          title="Nothing to do"
+          message="Tasks assigned to you will appear here."
+          icon="check-circle"
+        />
       )}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  priority: {fontSize: font.xs, fontWeight: '700', letterSpacing: 0.5},
-});
+const createStyles = (_colors: AppColors) =>
+  StyleSheet.create({
+    priority: { fontSize: font.xs, fontWeight: '700', letterSpacing: 0.5 },
+  });
