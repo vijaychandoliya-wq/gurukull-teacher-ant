@@ -59,6 +59,15 @@ react {
  */
 def enableProguardInReleaseBuilds = false
 
+// Play Console requires a release bundle signed with the app's upload key.
+// Keep keystore.properties outside version control; the example file documents
+// the required keys without storing credentials in the repository.
+def releaseKeystoreProperties = new Properties()
+def releaseKeystoreFile = rootProject.file('keystore.properties')
+if (releaseKeystoreFile.exists()) {
+    releaseKeystoreFile.withInputStream { releaseKeystoreProperties.load(it) }
+}
+
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
@@ -82,8 +91,8 @@ android {
         applicationId "com.gurukullteacherant"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 7
+        versionName "1.6"
     }
     signingConfigs {
         debug {
@@ -92,15 +101,22 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (!releaseKeystoreProperties['storeFile']) {
+                throw new GradleException('Missing android/keystore.properties. Copy keystore.properties.example and configure the Play upload key before building a release.')
+            }
+            storeFile file(releaseKeystoreProperties['storeFile'])
+            storePassword releaseKeystoreProperties['storePassword']
+            keyAlias releaseKeystoreProperties['keyAlias']
+            keyPassword releaseKeystoreProperties['keyPassword']
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

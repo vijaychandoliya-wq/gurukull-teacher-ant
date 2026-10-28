@@ -3,11 +3,20 @@
  * accepts. Shared by staff leave, student leave and principal approvals so the
  * confirmation wording and the comment field behave identically everywhere.
  */
-import React, {useState} from 'react';
-import {StyleSheet} from 'react-native';
-import {Button, Flex, Input, Modal, Text, Toast, View, WhiteSpace} from '@ant-design/react-native';
-import {friendlyError} from '../hooks';
-import {colors, font, spacing} from '../theme';
+import React, { useState } from 'react';
+import { StyleSheet } from 'react-native';
+import {
+  Button,
+  Flex,
+  Input,
+  Modal,
+  Text,
+  Toast,
+  View,
+  WhiteSpace,
+} from '@ant-design/react-native';
+import { friendlyError } from '../hooks';
+import { font, spacing, useThemedStyles, type AppColors } from '../theme';
 
 export function ApprovalActions({
   label,
@@ -23,33 +32,40 @@ export function ApprovalActions({
   onDone: () => Promise<void>;
   onError: (message: string) => void;
 }) {
+  const styles = useThemedStyles(createStyles);
   const [comments, setComments] = useState('');
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const decide = (action: 'approve' | 'reject') => {
     const verb = action === 'approve' ? 'Approve' : 'Reject';
-    Modal.alert(`${verb}?`, `${verb} ${label}. The applicant is notified straight away.`, [
-      {text: 'Cancel', style: 'cancel'},
-      {
-        text: verb,
-        style: action === 'reject' ? 'destructive' : 'default',
-        onPress: async () => {
-          setBusy(true);
-          try {
-            await (action === 'approve' ? onApprove(comments.trim()) : onReject(comments.trim()));
-            Toast.success(action === 'approve' ? 'Approved' : 'Rejected', 2);
-            setComments('');
-            setExpanded(false);
-            await onDone();
-          } catch (reason) {
-            onError(friendlyError(reason));
-          } finally {
-            setBusy(false);
-          }
+    Modal.alert(
+      `${verb}?`,
+      `${verb} ${label}. The applicant is notified straight away.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: verb,
+          style: action === 'reject' ? 'destructive' : 'default',
+          onPress: async () => {
+            setBusy(true);
+            try {
+              await (action === 'approve'
+                ? onApprove(comments.trim())
+                : onReject(comments.trim()));
+              Toast.success(action === 'approve' ? 'Approved' : 'Rejected', 2);
+              setComments('');
+              setExpanded(false);
+              await onDone();
+            } catch (reason) {
+              onError(friendlyError(reason));
+            } finally {
+              setBusy(false);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
@@ -79,11 +95,17 @@ export function ApprovalActions({
           style={styles.action}
           loading={busy}
           disabled={busy}
-          onPress={() => decide('approve')}>
+          onPress={() => decide('approve')}
+        >
           Approve
         </Button>
         <View style={styles.gap} />
-        <Button size="small" style={styles.action} disabled={busy} onPress={() => decide('reject')}>
+        <Button
+          size="small"
+          style={styles.action}
+          disabled={busy}
+          onPress={() => decide('reject')}
+        >
           <Text style={styles.rejectText}>Reject</Text>
         </Button>
       </Flex>
@@ -91,9 +113,10 @@ export function ApprovalActions({
   );
 }
 
-const styles = StyleSheet.create({
-  action: {flex: 1},
-  gap: {width: spacing.s},
-  rejectText: {color: colors.danger},
-  addComment: {fontSize: font.ms, color: colors.primary},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    action: { flex: 1 },
+    gap: { width: spacing.s },
+    rejectText: { color: colors.danger },
+    addComment: { fontSize: font.ms, color: colors.primary },
+  });

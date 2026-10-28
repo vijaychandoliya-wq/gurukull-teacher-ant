@@ -1,8 +1,7 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import {
   Button,
-  Card,
   DatePicker,
   Flex,
   Input,
@@ -23,9 +22,10 @@ import {
   getHomework,
   getHomeworkSubjects,
 } from '../api';
-import {formatDate, friendlyError, pickerData, useAsyncData} from '../hooks';
+import { formatDate, friendlyError, pickerData, useAsyncData } from '../hooks';
 import {
   AntIcon,
+  Card,
   EmptyBlock,
   LoadingBlock,
   PageTitle,
@@ -34,59 +34,87 @@ import {
   SectionTitle,
   ButtonLabel,
 } from '../components/ui';
-import {ScreenKey, ScreenParams} from '../navigation';
-import {colors, spacing} from '../theme';
+import { ScreenKey, ScreenParams } from '../navigation';
+import { spacing, useThemedStyles, type AppColors } from '../theme';
 
 type Scope = 'pending' | 'completed' | 'approval' | 'rejected';
 
-const TABS: {title: string; scope: Scope}[] = [
-  {title: 'Pending', scope: 'pending'},
-  {title: 'All', scope: 'completed'},
-  {title: 'Awaiting', scope: 'approval'},
-  {title: 'Rejected', scope: 'rejected'},
+const TABS: { title: string; scope: Scope }[] = [
+  { title: 'Pending', scope: 'pending' },
+  { title: 'All', scope: 'completed' },
+  { title: 'Awaiting', scope: 'approval' },
+  { title: 'Rejected', scope: 'rejected' },
 ];
 
-type HomeworkData = {items: AnyRecord[]; classes: AnyRecord[]};
+type HomeworkData = { items: AnyRecord[]; classes: AnyRecord[] };
 
-const EMPTY: HomeworkData = {items: [], classes: []};
+const EMPTY: HomeworkData = { items: [], classes: [] };
 
 export default function HomeworkScreen({
   navigate,
 }: {
   navigate: (screen: ScreenKey, params?: ScreenParams) => void;
 }) {
+  const styles = useThemedStyles(createStyles);
+
   const [scope, setScope] = useState<Scope>('pending');
   const [composing, setComposing] = useState(false);
 
   const loader = useCallback(async (): Promise<HomeworkData> => {
-    const [items, classes] = await Promise.all([getHomework(scope), getClasses()]);
-    return {items, classes};
+    const [items, classes] = await Promise.all([
+      getHomework(scope),
+      getClasses(),
+    ]);
+    return { items, classes };
   }, [scope]);
 
-  const {data, loading, refreshing, error, setError, reload, refresh, clearError} = useAsyncData(loader, EMPTY);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    setError,
+    reload,
+    refresh,
+    clearError,
+  } = useAsyncData(loader, EMPTY);
 
   const remove = (item: AnyRecord) => {
-    Modal.alert('Delete homework', `Remove the ${item.subject_name || ''} homework for ${item.class_name || 'this class'}?`, [
-      {text: 'Cancel', style: 'cancel'},
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteHomework(item.id);
-            Toast.success('Homework deleted', 2);
-            await reload();
-          } catch (reason) {
-            setError(friendlyError(reason));
-          }
+    Modal.alert(
+      'Delete homework',
+      `Remove the ${item.subject_name || ''} homework for ${
+        item.class_name || 'this class'
+      }?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteHomework(item.id);
+              Toast.success('Homework deleted', 2);
+              await reload();
+            } catch (reason) {
+              setError(friendlyError(reason));
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
-      <PageTitle title="Homework" subtitle="Assign daily homework and track what is still pending." />
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
+      <PageTitle
+        title="Homework"
+        subtitle="Assign daily homework and track what is still pending."
+      />
 
       <Button type="primary" onPress={() => setComposing(value => !value)}>
         <ButtonLabel icon={composing ? 'up' : 'plus'} tone="onPrimary">
@@ -110,11 +138,12 @@ export default function HomeworkScreen({
       ) : null}
 
       <Tabs
-        tabs={TABS.map(tab => ({title: tab.title, key: tab.scope}))}
+        tabs={TABS.map(tab => ({ title: tab.title, key: tab.scope }))}
         page={TABS.findIndex(tab => tab.scope === scope)}
         onChange={(_tab, index) => setScope(TABS[index].scope)}
         swipeable={false}
-        noRenderContent>
+        noRenderContent
+      >
         <View />
       </Tabs>
       <WhiteSpace size="lg" />
@@ -123,17 +152,25 @@ export default function HomeworkScreen({
         <LoadingBlock />
       ) : data.items.length ? (
         <>
-          <SectionTitle title={`${data.items.length} ${data.items.length === 1 ? 'entry' : 'entries'}`} />
+          <SectionTitle
+            title={`${data.items.length} ${
+              data.items.length === 1 ? 'entry' : 'entries'
+            }`}
+          />
           {data.items.map((item, index) => (
             <RecordCard
               key={item.id || index}
-              title={`${item.subject_name || 'Homework'} · ${item.class_name || ''}`}
+              title={`${item.subject_name || 'Homework'} · ${
+                item.class_name || ''
+              }`}
               status={item.status_display || item.status}
               icon="book"
               meta={[
                 item.date ? `Given ${item.date}` : null,
                 item.submission_date ? `Due ${item.submission_date}` : null,
-                item.pending_count !== undefined ? `${item.pending_count} pending submissions` : null,
+                item.pending_count !== undefined
+                  ? `${item.pending_count} pending submissions`
+                  : null,
                 item.comments ? `Approver: ${item.comments}` : null,
               ]}
               body={item.description}
@@ -148,13 +185,20 @@ export default function HomeworkScreen({
                       onPress={() =>
                         navigate('homeworkSubmissions', {
                           homeworkId: item.id,
-                          title: `${item.subject_name || 'Homework'} · ${item.class_name || ''}`,
+                          title: `${item.subject_name || 'Homework'} · ${
+                            item.class_name || ''
+                          }`,
                         })
-                      }>
+                      }
+                    >
                       Submissions
                     </Button>
                     <View style={styles.footerGap} />
-                    <Button size="small" style={styles.footerAction} onPress={() => remove(item)}>
+                    <Button
+                      size="small"
+                      style={styles.footerAction}
+                      onPress={() => remove(item)}
+                    >
                       <Text style={styles.deleteText}>Delete</Text>
                     </Button>
                   </Flex>
@@ -232,7 +276,10 @@ function HomeworkForm({
 
   return (
     <Card>
-      <Card.Header title="New homework" thumb={<AntIcon name="plus-circle" />} />
+      <Card.Header
+        title="New homework"
+        thumb={<AntIcon name="plus-circle" />}
+      />
       <Card.Body>
         <List>
           <Picker
@@ -240,16 +287,28 @@ function HomeworkForm({
             cols={1}
             value={classId}
             onChange={chooseClass}
-            onOk={chooseClass}>
+            onOk={chooseClass}
+          >
             <List.Item arrow="horizontal">Class</List.Item>
           </Picker>
-          <Picker data={pickerData(subjects)} cols={1} value={subjectId} onChange={setSubjectId} onOk={setSubjectId}>
+          <Picker
+            data={pickerData(subjects)}
+            cols={1}
+            value={subjectId}
+            onChange={setSubjectId}
+            onOk={setSubjectId}
+          >
             <List.Item arrow="horizontal">Subject</List.Item>
           </Picker>
           <DatePicker value={date} mode="date" onChange={setDate}>
             <List.Item arrow="horizontal">Given on</List.Item>
           </DatePicker>
-          <DatePicker value={dueDate} mode="date" minDate={date} onChange={setDueDate}>
+          <DatePicker
+            value={dueDate}
+            mode="date"
+            minDate={date}
+            onChange={setDueDate}
+          >
             <List.Item arrow="horizontal">Submission date</List.Item>
           </DatePicker>
         </List>
@@ -263,7 +322,12 @@ function HomeworkForm({
           showCount
         />
         <WhiteSpace size="lg" />
-        <Button type="primary" loading={saving} disabled={saving} onPress={save}>
+        <Button
+          type="primary"
+          loading={saving}
+          disabled={saving}
+          onPress={save}
+        >
           Save homework
         </Button>
       </Card.Body>
@@ -271,8 +335,9 @@ function HomeworkForm({
   );
 }
 
-const styles = StyleSheet.create({
-  footerAction: {flex: 1},
-  footerGap: {width: spacing.s},
-  deleteText: {color: colors.danger},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    footerAction: { flex: 1 },
+    footerGap: { width: spacing.s },
+    deleteText: { color: colors.danger },
+  });

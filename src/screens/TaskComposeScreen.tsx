@@ -1,8 +1,7 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import {
   Button,
-  Card,
   Checkbox,
   DatePicker,
   Input,
@@ -21,26 +20,47 @@ import {
   getTaskStudents,
   getTaskTeachers,
 } from '../api';
-import {formatDateTime, friendlyError, pickerData, useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen, SectionTitle} from '../components/ui';
-import {colors, font, spacing} from '../theme';
+import {
+  formatDateTime,
+  friendlyError,
+  pickerData,
+  useAsyncData,
+} from '../hooks';
+import {
+  AntIcon,
+  Card,
+  EmptyBlock,
+  LoadingBlock,
+  PageTitle,
+  Screen,
+  SectionTitle,
+} from '../components/ui';
+import { font, spacing, useThemedStyles, type AppColors } from '../theme';
 
 const PRIORITIES = [
-  {label: 'Low', value: 'low'},
-  {label: 'Medium', value: 'medium'},
-  {label: 'High', value: 'high'},
+  { label: 'Low', value: 'low' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'High', value: 'high' },
 ];
 
 /** Who a task can be handed to. Mirrors the server's assignee types. */
 const TYPES = [
-  {label: 'Teacher', value: 'teacher'},
-  {label: 'Staff', value: 'nonteacher'},
-  {label: 'Student', value: 'student'},
+  { label: 'Teacher', value: 'teacher' },
+  { label: 'Staff', value: 'nonteacher' },
+  { label: 'Student', value: 'student' },
 ];
 
-export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
+export default function TaskComposeScreen({ onDone }: { onDone: () => void }) {
+  const styles = useThemedStyles(createStyles);
+
   const loader = useCallback(() => getTaskOptions(), []);
-  const {data: options, loading, error, setError, clearError} = useAsyncData<AnyRecord>(loader, {});
+  const {
+    data: options,
+    loading,
+    error,
+    setError,
+    clearError,
+  } = useAsyncData<AnyRecord>(loader, {});
 
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
@@ -94,7 +114,11 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
   };
 
   const toggle = (id: string) =>
-    setSelected(current => (current.includes(id) ? current.filter(item => item !== id) : [...current, id]));
+    setSelected(current =>
+      current.includes(id)
+        ? current.filter(item => item !== id)
+        : [...current, id],
+    );
 
   const save = async () => {
     if (!title.trim()) {
@@ -116,7 +140,9 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
         type: String(type[0]),
         priority: String(priority[0]),
         assignee: selected,
-        ...(type[0] === 'student' && classId[0] ? {standardLink_id: classId[0]} : {}),
+        ...(type[0] === 'student' && classId[0]
+          ? { standardLink_id: classId[0] }
+          : {}),
       });
       Toast.success('Task created', 2);
       setTitle('');
@@ -136,12 +162,23 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
 
   return (
     <Screen error={error} onDismissError={clearError}>
-      <PageTitle title="New task" subtitle="Hand a to-do to a colleague or a student." />
+      <PageTitle
+        title="New task"
+        subtitle="Hand a to-do to a colleague or a student."
+      />
 
       <Card>
-        <Card.Header title="Task details" thumb={<AntIcon name="plus-circle" />} />
+        <Card.Header
+          title="Task details"
+          thumb={<AntIcon name="plus-circle" />}
+        />
         <Card.Body>
-          <Input value={title} onChangeText={setTitle} placeholder="Task title" allowClear />
+          <Input
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Task title"
+            allowClear
+          />
           <WhiteSpace size="lg" />
           <Input.TextArea
             value={details}
@@ -153,16 +190,32 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
           />
           <WhiteSpace size="lg" />
           <List>
-            <Picker data={PRIORITIES} cols={1} value={priority} onChange={setPriority} onOk={setPriority}>
+            <Picker
+              data={PRIORITIES}
+              cols={1}
+              value={priority}
+              onChange={setPriority}
+              onOk={setPriority}
+            >
               <List.Item arrow="horizontal">Priority</List.Item>
             </Picker>
             <DatePicker value={dueDate} mode="minute" onChange={setDueDate}>
               <List.Item arrow="horizontal">Due</List.Item>
             </DatePicker>
-            <DatePicker value={reminderDate} mode="minute" onChange={setReminderDate}>
+            <DatePicker
+              value={reminderDate}
+              mode="minute"
+              onChange={setReminderDate}
+            >
               <List.Item arrow="horizontal">Remind on</List.Item>
             </DatePicker>
-            <Picker data={TYPES} cols={1} value={type} onChange={chooseType} onOk={chooseType}>
+            <Picker
+              data={TYPES}
+              cols={1}
+              value={type}
+              onChange={chooseType}
+              onOk={chooseType}
+            >
               <List.Item arrow="horizontal">Assign to</List.Item>
             </Picker>
           </List>
@@ -176,7 +229,8 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
                 cols={1}
                 value={classId}
                 onChange={chooseClass}
-                onOk={chooseClass}>
+                onOk={chooseClass}
+              >
                 <List.Item arrow="horizontal">Class</List.Item>
               </Picker>
             </List>
@@ -187,7 +241,11 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
       <WhiteSpace size="xl" />
       <SectionTitle
         title="Assignees"
-        extra={selected.length ? <Text style={styles.count}>{selected.length} selected</Text> : undefined}
+        extra={
+          selected.length ? (
+            <Text style={styles.count}>{selected.length} selected</Text>
+          ) : undefined
+        }
       />
 
       {loadingPeople ? (
@@ -199,8 +257,13 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
               const id = String(person.id ?? person.user_id);
               return (
                 <View key={id} style={styles.personRow}>
-                  <Checkbox checked={selected.includes(id)} onChange={() => toggle(id)}>
-                    <Text style={styles.personName}>{person.name || person.fullname || person.FullName}</Text>
+                  <Checkbox
+                    checked={selected.includes(id)}
+                    onChange={() => toggle(id)}
+                  >
+                    <Text style={styles.personName}>
+                      {person.name || person.fullname || person.FullName}
+                    </Text>
                   </Checkbox>
                 </View>
               );
@@ -220,19 +283,26 @@ export default function TaskComposeScreen({onDone}: {onDone: () => void}) {
       )}
 
       <WhiteSpace size="xl" />
-      <Button type="primary" size="large" loading={saving} disabled={saving} onPress={save}>
+      <Button
+        type="primary"
+        size="large"
+        loading={saving}
+        disabled={saving}
+        onPress={save}
+      >
         Create task
       </Button>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  count: {fontSize: font.ms, color: colors.primary},
-  personRow: {
-    paddingVertical: spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  personName: {fontSize: font.m, color: colors.text, marginLeft: spacing.s},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    count: { fontSize: font.ms, color: colors.primary },
+    personRow: {
+      paddingVertical: spacing.m,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    personName: { fontSize: font.m, color: colors.text, marginLeft: spacing.s },
+  });

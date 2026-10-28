@@ -1,7 +1,7 @@
-import React, {useCallback} from 'react';
-import {Flex, WhiteSpace} from '@ant-design/react-native';
-import {AnyRecord, getDisciplineRecords} from '../api';
-import {useAsyncData} from '../hooks';
+import React, { useCallback } from 'react';
+import { Flex, WhiteSpace } from '@ant-design/react-native';
+import { AnyRecord, getDisciplineRecords } from '../api';
+import { useAsyncData } from '../hooks';
 import {
   EmptyBlock,
   LoadingBlock,
@@ -11,14 +11,18 @@ import {
   SectionTitle,
   StatCard,
 } from '../components/ui';
-import {colors} from '../theme';
+import { useThemeColors } from '../theme';
 
 /** The API stores both commendations and incidents under `type`. */
-const isPositive = (type?: string) => /positive|good|appreciat|commend|reward/i.test(String(type || ''));
+const isPositive = (type?: string) =>
+  /positive|good|appreciat|commend|reward/i.test(String(type || ''));
 
 export default function DisciplineScreen() {
+  const colors = useThemeColors();
+
   const loader = useCallback(() => getDisciplineRecords(), []);
-  const {data, loading, refreshing, error, refresh, clearError} = useAsyncData<AnyRecord[]>(loader, []);
+  const { data, loading, refreshing, error, refresh, clearError } =
+    useAsyncData<AnyRecord[]>(loader, []);
 
   if (loading) {
     return <LoadingBlock />;
@@ -27,15 +31,33 @@ export default function DisciplineScreen() {
   const positive = data.filter(record => isPositive(record.type)).length;
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
-      <PageTitle title="Performance" subtitle="Behaviour notes and commendations you have recorded." />
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
+      <PageTitle
+        title="Performance"
+        subtitle="Behaviour notes and commendations you have recorded."
+      />
 
       {data.length ? (
         <>
           <Flex justify="between">
             <StatCard icon="profile" value={data.length} label="Records" />
-            <StatCard icon="like" value={positive} label="Positive" color={colors.success} />
-            <StatCard icon="warning" value={data.length - positive} label="Concerns" color={colors.warning} />
+            <StatCard
+              icon="like"
+              value={positive}
+              label="Positive"
+              color={colors.success}
+            />
+            <StatCard
+              icon="warning"
+              value={data.length - positive}
+              label="Concerns"
+              color={colors.warning}
+            />
           </Flex>
           <WhiteSpace size="xl" />
 

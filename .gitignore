@@ -35,6 +35,7 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+android/keystore.properties
 .kotlin/
 
 # node.js
@@ -75,3 +76,13 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Credentials and transient release material
+.env
+.env.*
+.dev.vars*
+*.jks
+.private/
+
+.scannerwork/
+.sonar/

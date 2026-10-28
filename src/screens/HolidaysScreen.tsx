@@ -1,44 +1,84 @@
-import React, {useCallback} from 'react';
-import {StyleSheet} from 'react-native';
-import {Card, Flex, Text, View} from '@ant-design/react-native';
-import {AnyRecord, getHolidays} from '../api';
-import {useAsyncData} from '../hooks';
-import {AntIcon, EmptyBlock, LoadingBlock, PageTitle, Screen} from '../components/ui';
-import {colors, font, radius, spacing} from '../theme';
+import React, { useCallback } from 'react';
+import { StyleSheet } from 'react-native';
+import { Flex, Text, View } from '@ant-design/react-native';
+import { AnyRecord, getHolidays } from '../api';
+import { useAsyncData } from '../hooks';
+import {
+  AntIcon,
+  Card,
+  EmptyBlock,
+  LoadingBlock,
+  PageTitle,
+  Screen,
+} from '../components/ui';
+import {
+  font,
+  radius,
+  spacing,
+  useThemedStyles,
+  type AppColors,
+} from '../theme';
 
 /** `26-12-2026` → `{day: '26', month: 'DEC'}` for the calendar chip. */
 function splitDate(value?: string) {
   const raw = String(value || '');
   const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  const months = [
+    'JAN',
+    'FEB',
+    'MAR',
+    'APR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AUG',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DEC',
+  ];
   if (iso) {
-    return {day: iso[3], month: months[Number(iso[2]) - 1] || ''};
+    return { day: iso[3], month: months[Number(iso[2]) - 1] || '' };
   }
   const parts = raw.split('-');
   if (parts.length < 2) {
-    return {day: '—', month: ''};
+    return { day: '—', month: '' };
   }
-  return {day: parts[0], month: months[Number(parts[1]) - 1] || ''};
+  return { day: parts[0], month: months[Number(parts[1]) - 1] || '' };
 }
 
 export default function HolidaysScreen() {
+  const styles = useThemedStyles(createStyles);
+
   const loader = useCallback(() => getHolidays(), []);
-  const {data, loading, refreshing, error, refresh, clearError} = useAsyncData<AnyRecord[]>(loader, []);
+  const { data, loading, refreshing, error, refresh, clearError } =
+    useAsyncData<AnyRecord[]>(loader, []);
 
   if (loading) {
     return <LoadingBlock />;
   }
 
   return (
-    <Screen refreshing={refreshing} onRefresh={refresh} error={error} onDismissError={clearError}>
-      <PageTitle title="Holidays" subtitle="The school holiday calendar for this academic year." />
+    <Screen
+      refreshing={refreshing}
+      onRefresh={refresh}
+      error={error}
+      onDismissError={clearError}
+    >
+      <PageTitle
+        title="Holidays"
+        subtitle="The school holiday calendar for this academic year."
+      />
 
       {data.length ? (
         <Card>
-          <Card.Header title={`${data.length} holidays`} thumb={<AntIcon name="gift" />} />
+          <Card.Header
+            title={`${data.length} holidays`}
+            thumb={<AntIcon name="gift" />}
+          />
           <Card.Body>
             {data.map((holiday, index) => {
-              const {day, month} = splitDate(holiday.date);
+              const { day, month } = splitDate(holiday.date);
               return (
                 <View key={holiday.id || index} style={styles.row}>
                   <Flex align="center">
@@ -47,7 +87,9 @@ export default function HolidaysScreen() {
                       <Text style={styles.month}>{month}</Text>
                     </View>
                     <View style={styles.info}>
-                      <Text style={styles.title}>{holiday.title || 'Holiday'}</Text>
+                      <Text style={styles.title}>
+                        {holiday.title || 'Holiday'}
+                      </Text>
                       <Text style={styles.date}>{holiday.date}</Text>
                     </View>
                   </Flex>
@@ -57,30 +99,45 @@ export default function HolidaysScreen() {
           </Card.Body>
         </Card>
       ) : (
-        <EmptyBlock title="No holidays listed" message="The holiday calendar has not been published yet." icon="gift" />
+        <EmptyBlock
+          title="No holidays listed"
+          message="The holiday calendar has not been published yet."
+          icon="gift"
+        />
       )}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    paddingVertical: spacing.m,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  dateChip: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.m,
-    backgroundColor: colors.wathet,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.m,
-  },
-  day: {fontSize: font.xl, fontWeight: '700', color: colors.primary, lineHeight: 20},
-  month: {fontSize: font.xxs, fontWeight: '700', color: colors.primary, letterSpacing: 0.5},
-  info: {flex: 1},
-  title: {fontSize: font.l, fontWeight: '600', color: colors.text},
-  date: {fontSize: font.ms, color: colors.weak, marginTop: 2},
-});
+const createStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    row: {
+      paddingVertical: spacing.m,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    dateChip: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.m,
+      backgroundColor: colors.wathet,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.m,
+    },
+    day: {
+      fontSize: font.xl,
+      fontWeight: '700',
+      color: colors.primary,
+      lineHeight: 20,
+    },
+    month: {
+      fontSize: font.xxs,
+      fontWeight: '700',
+      color: colors.primary,
+      letterSpacing: 0.5,
+    },
+    info: { flex: 1 },
+    title: { fontSize: font.l, fontWeight: '600', color: colors.text },
+    date: { fontSize: font.ms, color: colors.weak, marginTop: 2 },
+  });
